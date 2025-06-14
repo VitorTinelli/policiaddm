@@ -9,8 +9,9 @@ import Footer from '../../footer/Footer';
 interface MilitarData {
   id: string;
   nick: string;
-  patente: string;
-  cargo?: string;
+  patente: number; 
+  patente_nome?: string; 
+  pago?: boolean; 
   tag?: string;
   'tag-promotor'?: string;
   email?: string;
@@ -53,7 +54,7 @@ const ProfilesContent = memo(function ProfilesContent() {
     const timestamp = localStorage.getItem(`${key}_timestamp`);
     
     if (cached && timestamp) {
-      const isValid = Date.now() - parseInt(timestamp) < 10 * 60 * 1000; // 10 minutes
+      const isValid = Date.now() - parseInt(timestamp) < 2 * 60 * 1000; // 2 minutes instead of 10
       if (isValid) {
         return JSON.parse(cached);
       }
@@ -130,10 +131,8 @@ const ProfilesContent = memo(function ProfilesContent() {
 
   const getStatusIcon = useCallback((status: string) => {
     switch (status) {
-      case 'aprovado': 
-      case 'aceita': return '✅';
-      case 'reprovado': 
-      case 'rejeitada': return '❌';
+      case 'aprovado': return '✅';
+      case 'rejeitado': return '❌';
       case 'aguardando': return '⏳';
       default: return '📝';
     }
@@ -141,10 +140,8 @@ const ProfilesContent = memo(function ProfilesContent() {
 
   const getStatusText = useCallback((status: string) => {
     switch (status) {
-      case 'aprovado': 
-      case 'aceita': return 'Aprovado';
-      case 'reprovado': 
-      case 'rejeitada': return 'Rejeitado';
+      case 'aprovado': return 'Aprovado';
+      case 'rejeitado': return 'Rejeitado';
       case 'aguardando': return 'Aguardando';
       default: return 'Indefinido';
     }
@@ -162,10 +159,8 @@ const ProfilesContent = memo(function ProfilesContent() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'aprovado':
-      case 'aceita': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'reprovado':
-      case 'rejeitada': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'aprovado': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'rejeitado': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       case 'aguardando': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
@@ -231,15 +226,15 @@ const ProfilesContent = memo(function ProfilesContent() {
           <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-2xl h-fit">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 pb-6 border-b-2 border-gray-100 dark:border-gray-700">
               <div className="flex-shrink-0">
-                <HabboProfilePicture username={militar.nick} size="l" direction='2' headOnly/>
+                <HabboProfilePicture username={militar.nick} size="l" direction='2' />
               </div>
               <div className="text-center sm:text-left">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{militar.nick}</h1>
                 <div className="bg-gray-900 dark:bg-gray-700 text-yellow-400 px-3 py-1 rounded-md text-lg font-semibold inline-block mb-2">
-                  {militar.patente}
+                  {militar.patente_nome || 'Soldado'}
                 </div>
-                {militar.cargo && (
-                  <div className="text-gray-600 dark:text-gray-300 font-medium mb-2">{militar.cargo}</div>
+                {militar.pago && (
+                  <div className="text-green-600 dark:text-green-400 font-medium mb-2">✅ Militar Pago</div>
                 )}
                 {militar.tag && (
                   <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded font-bold inline-block">
@@ -251,8 +246,30 @@ const ProfilesContent = memo(function ProfilesContent() {
 
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Missão</h3>
-              <div className="bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4 font-mono text-gray-900 dark:text-white break-words">
-                {militar.missaoFormatada}
+              <div className="bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4 font-mono text-gray-900 dark:text-white break-words relative">
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1">
+                    {militar.missaoFormatada}
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(militar.missaoFormatada).then(() => {
+                        const btn = document.activeElement as HTMLButtonElement;
+                        const originalText = btn.textContent;
+                        btn.textContent = '✅';
+                        btn.classList.add('bg-green-100', 'dark:bg-green-800');
+                        setTimeout(() => {
+                          btn.textContent = originalText;
+                          btn.classList.remove('bg-green-100', 'dark:bg-green-800');
+                        }, 1500);
+                      });
+                    }}
+                    className="flex-shrink-0 w-8 h-8 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-500 transition-all duration-200 shadow-sm hover:shadow-md"
+                    title="Copiar missão"
+                  >
+                    📋
+                  </button>
+                </div>
               </div>
             </div>
 

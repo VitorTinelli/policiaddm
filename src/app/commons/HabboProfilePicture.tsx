@@ -89,7 +89,7 @@ export const HabboProfilePicture: React.FC<HabboProfilePictureProps> = memo(({
   }
 
   return (
-    <div className={`relative ${sizeClasses} ${!imageLoaded ? 'bg-gray-100' : 'bg-transparent'} rounded-md overflow-hidden`}>
+    <div className={`relative ${sizeClasses} ${!imageLoaded ? 'bg-gray-100' : 'bg-transparent'} rounded-md overflow-hidden habbo-avatar`}>
       {/* Loading indicator */}
       {!imageLoaded && !imageError && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
@@ -107,7 +107,7 @@ export const HabboProfilePicture: React.FC<HabboProfilePictureProps> = memo(({
         alt={`Avatar de ${username}`}
         width={sizePixels}
         height={sizePixels}
-        className="object-contain"
+        className="!w-full !h-full object-contain"
         onLoad={handleImageLoad}
         onError={handleImageError}
         unoptimized // Necessário para URLs externas que podem não ser otimizáveis

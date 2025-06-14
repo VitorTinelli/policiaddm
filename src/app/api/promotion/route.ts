@@ -1,35 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import supabase from '../supabase';
 
-const hierarchyOrder = [
-  'Soldado',
-  'Cabo', 
-  'Sargento',
-  'Subtenente',
-  'Aspirante a Oficial',
-  'Tenente',
-  'Capitão',
-  'Coronel',
-  'Major',
-  'General',
-  'Marechal',
-  'Comandante',
-  'Comandante-geral',
-  'Comandante Supremo'
-];
-
 interface PromotionRequestBody {
   afetado: string;
   motivo: string;
   email: string;
   permissao?: string;
-}
-
-interface MilitarData {
-  id: string;
-  patente: string;
-  email: string;
-  tag?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -49,10 +25,15 @@ export async function POST(request: NextRequest) {
 
     console.log('Dados recebidos:', { afetado, motivo, email, permissao });
 
-    // Buscar dados do promotor
+    // Buscar dados do promotor com JOIN na tabela patentes
     const { data: promotorData, error: promotorError } = await supabase
       .from('militares')
-      .select('id, patente, tag')
+      .select(`
+        id,
+        patente,
+        tag,
+        patentes!inner(patente)
+      `)
       .eq('email', email)
       .single();
 
@@ -83,28 +64,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const militarAfetado = afetadoData as MilitarData;
-    const patenteAtual = militarAfetado.patente;
-    const afetadoId = militarAfetado.id;
+    const afetadoId = afetadoData.id;
+    const patenteAtualId = afetadoData.patente;
+    
+    // Buscar o nome da patente atual
+    const { data: patenteAtual, error: patenteAtualError } = await supabase
+      .from('patentes')
+      .select('patente')
+      .eq('id', patenteAtualId)
+      .single();
 
-    // Validar patente atual
-    if (!hierarchyOrder.includes(patenteAtual)) {
+    if (patenteAtualError || !patenteAtual) {
+      console.error('Erro ao buscar patente atual:', patenteAtualError);
       return NextResponse.json(
-        { error: 'Patente atual do militar é inválida' },
+        { error: 'Patente atual não encontrada' },
         { status: 400 }
       );
     }
+    
+    const patenteAtualNome = patenteAtual.patente;
+    
+    console.log('Patente atual ID:', patenteAtualId);
+    console.log('Patente atual nome:', patenteAtualNome);
 
-    // Verificar se já está na patente máxima
-    const currentIndex = hierarchyOrder.indexOf(patenteAtual);
-    if (currentIndex === hierarchyOrder.length - 1) {
+    // Buscar a próxima patente na hierarquia
+    const { data: proximaPatente, error: proximaPatenteError } = await supabase
+      .from('patentes')
+      .select('id, patente')
+      .eq('id', patenteAtualId + 1)
+      .single();
+
+    if (proximaPatenteError || !proximaPatente) {
       return NextResponse.json(
         { error: 'O militar já está na patente máxima e não pode ser promovido' },
         { status: 400 }
       );
     }
-    
-    const novaPatente = hierarchyOrder[currentIndex + 1];
+
+    const novaPatenteId = proximaPatente.id;
+    const novaPatenteNome = proximaPatente.patente;
 
     // Verificar se já existe promoção pendente
     const { data: existingPromotion, error: checkError } = await supabase
@@ -133,8 +131,8 @@ export async function POST(request: NextRequest) {
     const insertData = {
       promotor: promotorId,
       afetado: afetadoId,
-      'nova-patente': novaPatente,
-      'patente-atual': patenteAtual,
+      'nova-patente': novaPatenteId,
+      'patente-atual': patenteAtualId,
       permissao: permissao || null,
       motivo: motivo,
       tipo: 'promocao',
@@ -167,8 +165,8 @@ export async function POST(request: NextRequest) {
         data: {
           afetado: afetado,
           afetadoId: afetadoId,
-          patenteAtual: patenteAtual,
-          novaPatente: novaPatente,
+          patenteAtual: patenteAtualNome,
+          novaPatente: novaPatenteNome,
           tipo: 'promocao'
         }
       },

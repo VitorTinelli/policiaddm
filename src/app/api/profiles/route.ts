@@ -5,8 +5,9 @@ interface Militar {
   id: string;
   nick: string;
   email: string;
-  patente?: string;
-  cargo?: string;
+  patente?: number; // Agora é ID da patente
+  patente_nome?: string; // Nome da patente vindo do JOIN
+  pago?: boolean; // Mudou de cargo para pago
   tag?: string;
   'tag-promotor'?: string;
   status?: string;
@@ -16,7 +17,9 @@ interface Militar {
 
 interface Curso {
   id: string;
-  curso: string;
+  curso: number; // Agora é o ID da tabela cursos-companhias
+  curso_nome?: string; // Nome do curso vindo do JOIN
+  curso_sigla?: string; // Sigla do curso vindo do JOIN
   militar: string;
   'dataAplicação': string;
   'horaAplicação': string;
@@ -31,10 +34,12 @@ interface PromocaoPunicao {
   id: string;
   tipo: 'promocao' | 'punicao';
   afetado: string;
-  status: 'aceita' | 'rejeitada' | 'pendente';
+  status: 'aprovado' | 'aguardando' | 'rejeitado';
   motivo?: string;
-  'patente-atual'?: string;
-  'nova-patente'?: string;
+  'patente-atual'?: string | number;
+  'nova-patente'?: string | number;
+  'patente-atual-nome'?: string;
+  'nova-patente-nome'?: string;
   created_at: string;
   promotor?: {
     nick: string;
@@ -85,22 +90,40 @@ export async function GET(request: NextRequest) {
     let militarError: Error | null = null;
 
     if (email) {
-      // Busca por email
+      // Busca por email com JOIN na tabela patentes
       const result = await supabase
         .from('militares')
-        .select('*')
+        .select(`
+          *,
+          patentes!inner(patente)
+        `)
         .eq('email', email)
         .single();
-      militar = result.data as Militar;
+      
+      if (result.data) {
+        militar = {
+          ...result.data,
+          patente_nome: result.data.patentes?.patente
+        } as Militar;
+      }
       militarError = result.error;
     } else {
-      // Busca por nick
+      // Busca por nick com JOIN na tabela patentes
       const result = await supabase
         .from('militares')
-        .select('*')
+        .select(`
+          *,
+          patentes!inner(patente)
+        `)
         .eq('nick', nick)
         .single();
-      militar = result.data as Militar;
+      
+      if (result.data) {
+        militar = {
+          ...result.data,
+          patente_nome: result.data.patentes?.patente
+        } as Militar;
+      }
       militarError = result.error;
     }
 
@@ -119,7 +142,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Busca cursos com join manual mais simples
+    // Busca cursos (sem JOIN devido ao hífen no nome da tabela)
     const { data: cursos, error: cursosError } = await supabase
       .from('cursos')
       .select('*')
@@ -130,22 +153,51 @@ export async function GET(request: NextRequest) {
       console.error('Erro ao buscar cursos:', cursosError);
     }
 
-    // Busca dados do aplicador separadamente se necessário
-    const cursosComAplicador: Curso[] = [];
+    // Busca dados do aplicador e curso separadamente
+    const cursosComDetalhes: Curso[] = [];
     if (cursos && cursos.length > 0) {
       for (const curso of cursos) {
         let aplicadorData = null;
+        let cursoInfo = null;
+
+        // Buscar dados do aplicador
         if (curso.aplicador) {
           const { data: aplicador } = await supabase
             .from('militares')
-            .select('nick, patente')
+            .select(`
+              nick,
+              patente,
+              patentes!inner(patente)
+            `)
             .eq('id', curso.aplicador)
             .single();
-          aplicadorData = aplicador;
+          
+          if (aplicador) {
+            aplicadorData = {
+              nick: aplicador.nick,
+              patente: aplicador.patentes?.[0]?.patente || ''
+            };
+          }
         }
-        cursosComAplicador.push({
+
+        // Buscar informações do curso
+        if (curso.curso) {
+          const { data: cursoDetalhes } = await supabase
+            .from('cursos-companhias')
+            .select('sigla, nome')
+            .eq('id', curso.curso)
+            .single();
+          
+          if (cursoDetalhes) {
+            cursoInfo = cursoDetalhes;
+          }
+        }
+
+        cursosComDetalhes.push({
           ...curso,
-          aplicador: aplicadorData
+          aplicador: aplicadorData,
+          curso_nome: cursoInfo?.nome || `Curso ${curso.curso}`,
+          curso_sigla: cursoInfo?.sigla || 'N/A'
         } as Curso);
       }
     }
@@ -157,6 +209,8 @@ export async function GET(request: NextRequest) {
       .eq('afetado', militar.id)
       .order('created_at', { ascending: false });
 
+    console.log('Promoções encontradas para', militar.nick, ':', promocoesPunicoes);
+
     if (promocoesError) {
       console.error('Erro ao buscar promoções/punições:', promocoesError);
     }
@@ -166,17 +220,56 @@ export async function GET(request: NextRequest) {
     if (promocoesPunicoes && promocoesPunicoes.length > 0) {
       for (const promocao of promocoesPunicoes) {
         let promotorData = null;
+        let patenteAtualNome = null;
+        let novaPatenteNome = null;
+
+        // Busca dados do promotor
         if (promocao.promotor) {
           const { data: promotor } = await supabase
             .from('militares')
-            .select('nick, patente, tag')
+            .select(`
+              nick,
+              patente,
+              tag,
+              patentes!inner(patente)
+            `)
             .eq('id', promocao.promotor)
             .single();
-          promotorData = promotor;
+          
+          if (promotor) {
+            promotorData = {
+              nick: promotor.nick,
+              patente: promotor.patentes?.[0]?.patente || '',
+              tag: promotor.tag
+            };
+          }
         }
+
+        // Busca nome da patente atual
+        if (promocao['patente-atual']) {
+          const { data: patenteAtual } = await supabase
+            .from('patentes')
+            .select('patente')
+            .eq('id', promocao['patente-atual'])
+            .single();
+          patenteAtualNome = patenteAtual?.patente;
+        }
+
+        // Busca nome da nova patente
+        if (promocao['nova-patente']) {
+          const { data: novaPatente } = await supabase
+            .from('patentes')
+            .select('patente')
+            .eq('id', promocao['nova-patente'])
+            .single();
+          novaPatenteNome = novaPatente?.patente;
+        }
+
         promocoesPunicoesComPromotor.push({
           ...promocao,
-          promotor: promotorData
+          promotor: promotorData,
+          'patente-atual-nome': patenteAtualNome,
+          'nova-patente-nome': novaPatenteNome
         } as PromocaoPunicao);
       }
     }
@@ -196,12 +289,12 @@ export async function GET(request: NextRequest) {
     const historico: HistoricoItem[] = [];
 
     // Adiciona cursos ao histórico
-    if (cursosComAplicador && cursosComAplicador.length > 0) {
-      cursosComAplicador.forEach(curso => {
+    if (cursosComDetalhes && cursosComDetalhes.length > 0) {
+      cursosComDetalhes.forEach(curso => {
         historico.push({
           id: curso.id,
           tipo: 'curso',
-          titulo: curso.curso,
+          titulo: curso.curso_nome || `Curso ${curso.curso}`,
           aplicador: curso.aplicador?.nick || 'Desconhecido',
           aplicadorPatente: curso.aplicador?.patente || '',
           data: new Date(`${curso['dataAplicação']}T${curso['horaAplicação']}`),
@@ -213,17 +306,13 @@ export async function GET(request: NextRequest) {
 
     // Adiciona promoções/punições ao histórico
     if (promocoesPunicoesComPromotor && promocoesPunicoesComPromotor.length > 0) {      
-      promocoesPunicoesComPromotor.forEach(promocao => {        
-        let icone = '⭐';
+      promocoesPunicoesComPromotor.forEach(promocao => {
+        const icone = promocao.tipo === 'promocao' ? '⭐' : '⚠️';
         let titulo = '';
         
         if (promocao.tipo === 'promocao') {
-          icone = promocao.status === 'aceita' ? '⭐' : promocao.status === 'rejeitada' ? '❌' : '⏳';
-          titulo = `Promoção para ${promocao['nova-patente'] || 'Nova patente'}`;
-        } else {
-          icone = promocao.status === 'aceita' ? '⚠️' : promocao.status === 'rejeitada' ? '❌' : '⏳';
-          titulo = `Punição: ${promocao.motivo || 'Motivo não especificado'}`;
-        }
+          titulo = `Promoção para ${promocao['nova-patente-nome'] || 'Nova patente'}`;
+        } 
 
         historico.push({
           id: promocao.id,
@@ -237,8 +326,8 @@ export async function GET(request: NextRequest) {
           status: promocao.status,
           icone: icone,          
           motivo: promocao.motivo,
-          patenteAtual: promocao['patente-atual'],
-          novaPatente: promocao['nova-patente']
+          patenteAtual: promocao['patente-atual-nome'],
+          novaPatente: promocao['nova-patente-nome']
         });
       });
     }
@@ -266,7 +355,7 @@ export async function GET(request: NextRequest) {
     historico.sort((a, b) => b.data.getTime() - a.data.getTime());    
     
     // Formata a missão
-    const missao = `[DCC] ${militar.patente || 'Soldado'}${militar.cargo ? `/${militar.cargo}` : ''} [${militar['tag-promotor'] || militar.tag || 'DDM'}]`;
+    const missao = `[DCC] ${militar.patente_nome || 'Soldado'}${militar.pago ? ' (Pago)' : ''} [${militar['tag-promotor'] || militar.tag || 'DDM'}]`;
 
     return NextResponse.json({
       success: true,

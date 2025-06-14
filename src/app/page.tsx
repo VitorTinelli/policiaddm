@@ -18,8 +18,9 @@ interface HistoricoItem {
 interface MilitarData {
   id: string;
   nick: string;
-  patente: string;
-  cargo?: string;
+  patente: number;
+  patente_nome?: string;
+  pago?: boolean; 
   tag?: string;
   email?: string;
   status: string;
@@ -137,9 +138,9 @@ export default function Homepage() {
                   </div>
                   <div className="flex-1 text-center md:text-center lg:text-left">
                     <h2 className="text-3xl sm:text-2xl md:text-xl lg:text-3xl font-bold mb-2 text-black dark:text-white">{profileData.militar.nick}</h2>
-                    <div className="text-xl sm:text-lg md:text-base lg:text-xl font-bold text-green-600 dark:text-green-400 mb-1">{profileData.militar.patente || 'Soldado'}</div>
-                    {profileData.militar.cargo && (
-                      <div className="text-lg sm:text-base md:text-sm lg:text-lg text-gray-600 dark:text-gray-400 mb-1">{profileData.militar.cargo}</div>
+                    <div className="text-xl sm:text-lg md:text-base lg:text-xl font-bold text-green-600 dark:text-green-400 mb-1">{profileData.militar.patente_nome || 'Soldado'}</div>
+                    {profileData.militar.pago && (
+                      <div className="text-lg sm:text-base md:text-sm lg:text-lg text-green-600 dark:text-green-400 mb-1">✅ Militar Pago</div>
                     )}
                     {profileData.militar.tag && (
                       <div className="inline-block bg-black dark:bg-gray-900 text-yellow-400 font-bold px-2 py-1 rounded text-base sm:text-sm md:text-xs lg:text-base mb-2">
@@ -219,7 +220,7 @@ export default function Homepage() {
                   🎓 Escola de Formação Básica
                 </h3>
                 <div className="flex flex-col gap-4 sm:gap-3 md:gap-3 lg:gap-4">
-                  <Link href="/efb" className="group flex items-center gap-4 sm:gap-3 md:gap-3 lg:gap-4 p-4 sm:p-3 md:p-3 lg:p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-yellow-400 hover:-translate-y-1 transition-all duration-200 shadow-sm hover:shadow-md">
+                  <Link href="/postcourse/efb" className="group flex items-center gap-4 sm:gap-3 md:gap-3 lg:gap-4 p-4 sm:p-3 md:p-3 lg:p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-yellow-400 hover:-translate-y-1 transition-all duration-200 shadow-sm hover:shadow-md">
                     <div className="w-12 h-12 sm:w-10 sm:h-10 md:w-8 md:h-8 lg:w-12 lg:h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center text-2xl sm:text-xl md:text-lg lg:text-2xl flex-shrink-0">
                       📚
                     </div>

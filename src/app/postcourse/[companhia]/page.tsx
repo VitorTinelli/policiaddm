@@ -1,27 +1,79 @@
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '../commons/AuthContext';
-import Header from '../header/Header';
-import Footer from '../footer/Footer';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import { useAuth } from '../../commons/AuthContext';
+import Header from '../../header/Header';
+import Footer from '../../footer/Footer';
 
-function EfbPage() {
-    const [courseName, setCourseName] = useState('');
+interface Course {
+    id: number;
+    sigla: string;
+    nome: string;
+    obrigatorio: boolean;
+    patente: number;
+}
+
+interface Company {
+    id: number;
+    sigla: string;
+    nome: string;
+}
+
+interface CompanyCoursesData {
+    company: Company;
+    courses: Course[];
+}
+
+function CompanyCoursePages() {
+    const params = useParams();
+    const companyParam = params.companhia as string;
+    
+    const [companyData, setCompanyData] = useState<CompanyCoursesData | null>(null);
+    const [selectedCourseId, setSelectedCourseId] = useState('');
     const [courseStudent, setCourseStudent] = useState('');
     const [courseDate, setCourseDate] = useState('');
     const [courseTime, setCourseTime] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     const { user } = useAuth();
     const email = user?.email;
+
+    // Carregar dados da companhia e cursos
+    useEffect(() => {
+        async function loadCompanyData() {
+            if (!companyParam) return;
+            
+            setIsLoadingData(true);
+            try {
+                const response = await fetch(`/api/courses?company=${encodeURIComponent(companyParam)}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setError(data.error || 'Erro ao carregar dados da companhia');
+                    return;
+                }
+
+                setCompanyData(data);
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                setError('Erro ao carregar dados da companhia');
+            } finally {
+                setIsLoadingData(false);
+            }
+        }
+
+        loadCompanyData();
+    }, [companyParam]);
 
     async function sendCourseData() {
         setError('');
         setIsLoading(true);
         
         try {
-            if (!courseName || !courseStudent || !courseDate || !courseTime) {
+            if (!selectedCourseId || !courseStudent || !courseDate || !courseTime) {
                 setError('Todos os campos são obrigatórios.');
                 return;
             }
@@ -31,17 +83,23 @@ function EfbPage() {
                 return;
             }
 
-            const response = await fetch('/api/efb', {
+            if (!companyData) {
+                setError('Dados da companhia não carregados.');
+                return;
+            }
+
+            const response = await fetch('/api/courses', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    courseName,
+                    courseId: parseInt(selectedCourseId),
                     courseStudent,
                     courseDate,
                     courseTime,
-                    instructorEmail: email
+                    instructorEmail: email,
+                    companyId: companyData.company.id
                 }),
             });
 
@@ -53,7 +111,7 @@ function EfbPage() {
             }
 
             // Reset form
-            setCourseName('');
+            setSelectedCourseId('');
             setCourseStudent('');
             setCourseDate('');
             setCourseTime('');
@@ -66,40 +124,78 @@ function EfbPage() {
         }
     }
 
+    if (isLoadingData) {
+        return (
+            <>
+                <Header />
+                <main className="min-h-[calc(100dvh-16dvh)] flex items-center justify-center bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-4 lg:p-6">
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
+                        <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+                            <span className="ml-2 text-gray-900 dark:text-white">Carregando...</span>
+                        </div>
+                    </div>
+                </main>
+                <Footer />
+            </>
+        );
+    }
+
+    if (!companyData) {
+        return (
+            <>
+                <Header />
+                <main className="min-h-[calc(100dvh-16dvh)] flex items-center justify-center bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-4 lg:p-6">
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
+                        <div className="text-center">
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                                Erro
+                            </h1>
+                            <p className="text-red-600 dark:text-red-400">
+                                {error || 'Companhia não encontrada'}
+                            </p>
+                        </div>
+                    </div>
+                </main>
+                <Footer />
+            </>
+        );
+    }
+
     return (
         <>
             <Header />
             <main className="min-h-[calc(100dvh-16dvh)] flex items-center justify-center bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-4 lg:p-6">
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-                        Escola de Formação Básica
+                        {companyData.company.nome}
                     </h1>
                     
                     <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
                         {/* Course Selection */}
                         <div>
                             <label 
-                                htmlFor="courseName" 
+                                htmlFor="courseId" 
                                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                             >
                                 Curso Aplicado:
                             </label>
                             <select 
-                                id="courseName" 
-                                name="courseName" 
-                                onChange={(e) => setCourseName(e.target.value)} 
-                                value={courseName}
+                                id="courseId" 
+                                name="courseId" 
+                                onChange={(e) => setSelectedCourseId(e.target.value)} 
+                                value={selectedCourseId}
                                 disabled={isLoading}
                                 className="w-full h-10 px-3 border border-gray-300 dark:border-gray-600 rounded-md outline-none transition-all duration-200 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 <option value="">Selecione um curso</option>
-                                <option value="CPO">CPO - Capacitação para Oficialato</option>
-                                <option value="CPS">CPS - Capacitação de Promoção para Subtenente</option>
-                                <option value="CFL">CFL - Capacitação de Funções de Liderança</option>
-                                <option value="CFB">CFB - Capacitação de Funções do Batalhão</option>
-                                <option value="CbFS">CbFS - Capacitação Básica do Fórum e Segurança</option>
-                                <option value="CAC">CAC - Capacitação Avançada de Comandos</option>
-                                <option value="CFS">CFS - Capacitação de Formação de Soldados</option>
+                                {companyData.courses
+                                    .sort((a, b) => a.id - b.id)
+                                    .map((course) => (
+                                    <option key={course.id} value={course.id}>
+                                        {course.sigla} - {course.nome}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         
@@ -185,4 +281,4 @@ function EfbPage() {
     );
 }
 
-export default EfbPage;
+export default CompanyCoursePages;
