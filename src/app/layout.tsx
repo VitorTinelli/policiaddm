@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SGD | Policia DDM",
   description: "Sistema de gerenciamento de dados do Departamento de Desenvolvimento Militar",
+  icons: {
+    icon: "/ddmLogo.png",
+  },
 };
 
 export default function RootLayout({
