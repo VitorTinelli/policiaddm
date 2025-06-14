@@ -1,103 +1,240 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
+import { useRequireAuth } from './commons/useRequireAuth';
+import { HabboProfilePicture } from './commons/HabboProfilePicture';
+import Footer from './footer/Footer';
+import Header from './header/Header';
+
+interface HistoricoItem {
+  id: number;
+  tipo: string;
+  icone: string;
+  titulo: string;
+  dataFormatada: string;
+}
+
+interface MilitarData {
+  id: string;
+  nick: string;
+  patente: string;
+  cargo?: string;
+  tag?: string;
+  email?: string;
+  status: string;
+  ativo?: boolean;
+  created_at: string;
+  missaoFormatada: string;
+}
+
+interface ProfileData {
+  militar: MilitarData;
+  historico: HistoricoItem[];
+}
+
+export default function Homepage() {
+  const { user, loading: authLoading } = useRequireAuth();
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const userEmail = useMemo(() => user?.email, [user?.email]);
+
+  const fetchProfile = useCallback(async () => {
+    if (!userEmail) {
+      setError('Sessão inválida');
+      setLoading(false);
+      return;
+    }
+
+    const cacheKey = `profile_${userEmail}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
+    
+    if (cachedData && cacheTimestamp) {
+      const isValid = Date.now() - parseInt(cacheTimestamp) < 5 * 60 * 1000;
+      if (isValid) {
+        setProfileData(JSON.parse(cachedData));
+        setLoading(false);
+        return;
+      }
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      // First get the user's nick from their email
+      const userResponse = await fetch(`/api/profiles?email=${encodeURIComponent(userEmail)}`);
+      
+      if (!userResponse.ok) {
+        setError('Perfil não encontrado. Contate o administrador.');
+        setLoading(false);
+        return;
+      }
+
+      const userDataResponse = await userResponse.json();
+      const userData = userDataResponse.data;
+
+      // Salvar no cache
+      localStorage.setItem(cacheKey, JSON.stringify(userData));
+      localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
+      
+      setProfileData(userData);
+    } catch (err) {
+      console.error('Erro ao buscar perfil:', err);
+      setError('Erro de conexão. Não foi possível carregar o perfil.');
+    } finally {
+      setLoading(false);
+    }
+  }, [userEmail]);
+
+  useEffect(() => {
+    if (user && userEmail) {
+      fetchProfile();
+    }
+  }, [fetchProfile, user, userEmail]);
+
+  const getRecentHistory = useMemo(() => {
+    if (!profileData?.historico) return [];
+    return profileData.historico.slice(0, 3);
+  }, [profileData?.historico]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900">
+        <div className="text-white dark:text-gray-300 text-xl">Verificando autenticação...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; 
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      <Header />
+      <div className="min-h-[calc(100vh-160px)] bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-8 sm:p-4 md:p-2 lg:p-8">
+        <div className="max-w-6xl mx-auto flex flex-col gap-12 sm:gap-8 md:gap-8 lg:gap-12">
+          
+          {/* Welcome Section */}
+          <section>
+            {loading ? (
+              <div className="text-center text-white dark:text-gray-300 text-xl p-8">Carregando perfil...</div>
+            ) : error ? (
+              <div className="bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg p-6 text-center text-red-800 dark:text-red-300">
+                <p className="mb-2">{error}</p>
+                <p className="text-sm">Email: {user?.email}</p>
+              </div>
+            ) : profileData ? (
+              <div className="flex flex-col gap-8">
+                {/* Profile Card */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 sm:p-6 md:p-4 lg:p-8 shadow-xl flex flex-col md:flex-col lg:flex-row items-center gap-8 sm:gap-4 md:gap-4 lg:gap-8 relative">
+                  <div className="flex-shrink-0">
+                    <HabboProfilePicture username={profileData.militar.nick} size="l" direction='2' />
+                  </div>
+                  <div className="flex-1 text-center md:text-center lg:text-left">
+                    <h2 className="text-3xl sm:text-2xl md:text-xl lg:text-3xl font-bold mb-2 text-black dark:text-white">{profileData.militar.nick}</h2>
+                    <div className="text-xl sm:text-lg md:text-base lg:text-xl font-bold text-green-600 dark:text-green-400 mb-1">{profileData.militar.patente || 'Soldado'}</div>
+                    {profileData.militar.cargo && (
+                      <div className="text-lg sm:text-base md:text-sm lg:text-lg text-gray-600 dark:text-gray-400 mb-1">{profileData.militar.cargo}</div>
+                    )}
+                    {profileData.militar.tag && (
+                      <div className="inline-block bg-black dark:bg-gray-900 text-yellow-400 font-bold px-2 py-1 rounded text-base sm:text-sm md:text-xs lg:text-base mb-2">
+                        [{profileData.militar.tag}]
+                      </div>
+                    )}
+                  </div>
+                  <Link 
+                    href={`/profile/${profileData.militar.nick}`} 
+                    className="absolute top-4 right-4 md:static md:self-center lg:absolute lg:top-4 lg:right-4 bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2 rounded-lg transition-colors duration-200 text-sm sm:text-xs md:text-xs lg:text-sm mt-0 md:mt-4 lg:mt-0"
+                  >
+                    Ver Perfil Completo
+                  </Link>
+                </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+                {/* Recent Activity */}
+                {getRecentHistory.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 sm:p-6 md:p-4 lg:p-8 shadow-xl">
+                    <h3 className="text-2xl sm:text-xl md:text-lg lg:text-2xl font-bold mb-6 sm:mb-4 md:mb-4 lg:mb-6 text-black dark:text-white">Atividade Recente</h3>
+                    <div className="flex flex-col gap-4 sm:gap-3 md:gap-3 lg:gap-4">
+                      {getRecentHistory.map((item: HistoricoItem) => (
+                        <div key={item.id} className={`flex items-center gap-4 sm:gap-3 md:gap-3 lg:gap-4 p-4 sm:p-3 md:p-3 lg:p-4 rounded-lg bg-gray-50 dark:bg-gray-700 ${
+                          item.tipo === 'curso' ? 'border-l-4 border-blue-500' :
+                          item.tipo === 'promocao' ? 'border-l-4 border-green-500' :
+                          item.tipo === 'punicao' ? 'border-l-4 border-red-500' :
+                          'border-l-4 border-purple-500'
+                        }`}>
+                          <span className="text-2xl sm:text-xl md:text-lg lg:text-2xl">{item.icone}</span>
+                          <div className="flex-1">
+                            <div className="font-bold text-black dark:text-white text-base sm:text-sm md:text-sm lg:text-base">{item.titulo}</div>
+                            <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-xs md:text-xs lg:text-sm">{item.dataFormatada}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </section>
+
+          {/* Quick Links Section */}
+          <section className="bg-white dark:bg-gray-800 rounded-2xl p-8 sm:p-6 md:p-4 lg:p-8 shadow-xl">
+            <h2 className="text-3xl sm:text-2xl md:text-xl lg:text-3xl font-bold mb-8 sm:mb-6 md:mb-4 lg:mb-8 text-black dark:text-white text-center">Acesso Rápido</h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-6 md:gap-4 lg:gap-8">
+              {/* Requerimentos */}
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-6 sm:p-4 md:p-3 lg:p-6 border border-gray-200 dark:border-gray-600">
+                <h3 className="text-xl sm:text-lg md:text-base lg:text-xl font-bold mb-6 sm:mb-4 md:mb-3 lg:mb-6 text-black dark:text-white flex items-center gap-2 border-b-2 border-gray-200 dark:border-gray-600 pb-2">
+                  📋 Requerimentos
+                </h3>
+                <div className="flex flex-col gap-4 sm:gap-3 md:gap-3 lg:gap-4">
+                  <Link href="/tags" className="group flex items-center gap-4 sm:gap-3 md:gap-3 lg:gap-4 p-4 sm:p-3 md:p-3 lg:p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-yellow-400 hover:-translate-y-1 transition-all duration-200 shadow-sm hover:shadow-md">
+                    <div className="w-12 h-12 sm:w-10 sm:h-10 md:w-8 md:h-8 lg:w-12 lg:h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center text-2xl sm:text-xl md:text-lg lg:text-2xl flex-shrink-0">
+                      🏷️
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-black dark:text-white text-lg sm:text-base md:text-sm lg:text-lg mb-1">Solicitar TAG</div>
+                      <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-xs md:text-xs lg:text-sm">Solicite uma TAG personalizada</div>
+                    </div>
+                  </Link>
+                  <Link href="/promotion" className="group flex items-center gap-4 sm:gap-3 md:gap-3 lg:gap-4 p-4 sm:p-3 md:p-3 lg:p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-yellow-400 hover:-translate-y-1 transition-all duration-200 shadow-sm hover:shadow-md">
+                    <div className="w-12 h-12 sm:w-10 sm:h-10 md:w-8 md:h-8 lg:w-12 lg:h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center text-2xl sm:text-xl md:text-lg lg:text-2xl flex-shrink-0">
+                      ⭐
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-black dark:text-white text-lg sm:text-base md:text-sm lg:text-lg mb-1">Promoções</div>
+                      <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-xs md:text-xs lg:text-sm">Promover militares</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Escola de Formação Básica */}
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-6 sm:p-4 md:p-3 lg:p-6 border border-gray-200 dark:border-gray-600">
+                <h3 className="text-xl sm:text-lg md:text-base lg:text-xl font-bold mb-6 sm:mb-4 md:mb-3 lg:mb-6 text-black dark:text-white flex items-center gap-2 border-b-2 border-gray-200 dark:border-gray-600 pb-2">
+                  🎓 Escola de Formação Básica
+                </h3>
+                <div className="flex flex-col gap-4 sm:gap-3 md:gap-3 lg:gap-4">
+                  <Link href="/efb" className="group flex items-center gap-4 sm:gap-3 md:gap-3 lg:gap-4 p-4 sm:p-3 md:p-3 lg:p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-yellow-400 hover:-translate-y-1 transition-all duration-200 shadow-sm hover:shadow-md">
+                    <div className="w-12 h-12 sm:w-10 sm:h-10 md:w-8 md:h-8 lg:w-12 lg:h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center text-2xl sm:text-xl md:text-lg lg:text-2xl flex-shrink-0">
+                      📚
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-black dark:text-white text-lg sm:text-base md:text-sm lg:text-lg mb-1">Aplicar Cursos</div>
+                      <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-xs md:text-xs lg:text-sm">Registrar cursos para militares</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+      <Footer />
+    </>
   );
 }

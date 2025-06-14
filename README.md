@@ -1,36 +1,210 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SGD/DDM - Sistema de Gestão Departamental
 
-## Getting Started
+Sistema de gestão para o Departamento de Desenvolvimento Militar (DDM) construído com Next.js 13+, Tailwind CSS e Supabase.
 
-First, run the development server:
+## 🚀 Tecnologias
 
+- **Next.js 15.3.3** - Framework React com App Router
+- **React 19** - Biblioteca de interface de usuário
+- **TypeScript** - Tipagem estática
+- **Tailwind CSS 4** - Framework CSS utilitário
+- **Supabase** - Backend como serviço (autenticação e banco de dados)
+- **React Hook Form** - Gerenciamento de formulários
+
+## ✨ Funcionalidades
+
+### 🔐 Sistema de Autenticação
+- Login com nickname (busca automática do email)
+- Registro de novos usuários com validação
+- Logout automático
+- Proteção de rotas
+- Gerenciamento de sessões com Supabase
+
+### 🎨 Interface de Usuário
+- Design responsivo (mobile-first)
+- Tema escuro/claro automático
+- Componentes reutilizáveis
+- Animações e transições suaves
+
+### 👤 Perfil de Usuário
+- Integração com API do Habbo Hotel
+- Exibição de avatar personalizado
+- Informações de patente e cargo
+- Histórico de atividades
+
+### 🛡️ Segurança
+- Row Level Security (RLS) no Supabase
+- Tokens JWT gerenciados automaticamente
+- Validação de dados no frontend e backend
+- Políticas de acesso granulares
+
+## 🛠️ Instalação e Configuração
+
+### Pré-requisitos
+- Node.js 18+ 
+- npm ou yarn
+- Conta no Supabase
+
+### 1. Clone o repositório
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd policiaddm
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Instale as dependências
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Configure o Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+#### 3.1. Crie um projeto no Supabase
+1. Acesse [supabase.com](https://supabase.com)
+2. Crie um novo projeto
+3. Aguarde a inicialização
 
-## Learn More
+#### 3.2. Configure o banco de dados
+1. Acesse o SQL Editor no dashboard do Supabase
+2. Execute o script `supabase-setup.sql` (incluso no projeto)
 
-To learn more about Next.js, take a look at the following resources:
+#### 3.3. Configure as variáveis de ambiente
+1. Copie o arquivo `.env.example` para `.env.local`
+2. Preencha com suas credenciais do Supabase:
+   ```bash
+   cp .env.example .env.local
+   ```
+3. Edite `.env.local` com suas chaves do Supabase
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Execute o projeto
+```bash
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Acesse http://localhost:3000
 
-## Deploy on Vercel
+## 📁 Estrutura do Projeto
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/app/
+├── api/                    # Configurações de API
+│   ├── supabase.ts        # Cliente Supabase (servidor)
+│   ├── supabase-client.ts # Cliente Supabase (browser)
+│   └── logout/route.ts    # Endpoint de logout
+├── commons/               # Componentes e hooks compartilhados
+│   ├── AuthContext.tsx    # Context de autenticação
+│   ├── useRequireAuth.tsx # Hook de proteção de rotas
+│   ├── HabboProfile.tsx   # Integração com Habbo API
+│   └── HabboProfilePicture.tsx
+├── header/               # Componente de cabeçalho
+│   └── Header.tsx
+├── footer/               # Componente de rodapé
+│   └── Footer.tsx
+├── login/                # Página de login
+│   └── page.tsx
+├── register/             # Página de registro
+│   └── page.tsx
+├── layout.tsx            # Layout principal
+├── page.tsx              # Homepage
+└── globals.css           # Estilos globais
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔧 Scripts Disponíveis
+
+```bash
+npm run dev      # Servidor de desenvolvimento
+npm run build    # Build de produção
+npm run start    # Servidor de produção
+npm run lint     # Linting do código
+```
+
+## 🎯 Como Usar
+
+### Registro de Usuário
+1. Acesse `/register`
+2. Preencha nickname único, email, senha
+3. Confirme a senha
+4. Clique em "Registrar"
+
+### Login
+1. Acesse `/login` 
+2. Digite seu nickname (não o email)
+3. Digite sua senha
+4. Clique em "Entrar"
+
+### Navegação
+- Homepage mostra perfil e atividades recentes
+- Header com busca e botão de logout
+- Footer com informações do sistema
+
+## 🔒 Segurança
+
+### Autenticação
+- JWT tokens gerenciados pelo Supabase
+- Sessões com renovação automática
+- Logout automático em caso de token expirado
+
+### Banco de Dados
+- Row Level Security habilitado
+- Políticas de acesso por usuário
+- Índices otimizados para performance
+
+### Frontend
+- Validação de formulários
+- Sanitização de inputs
+- Proteção contra XSS
+
+## 📱 Responsividade
+
+O sistema é totalmente responsivo e otimizado para:
+- 📱 **Mobile** (320px+)
+- 📱 **Tablet** (768px+)
+- 💻 **Desktop** (1024px+)
+- 🖥️ **Large Desktop** (1440px+)
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📋 Roadmap
+
+### Próximas Funcionalidades
+- [ ] Sistema de patentes e promoções
+- [ ] Dashboard administrativo
+- [ ] Sistema de notificações
+- [ ] Chat em tempo real
+- [ ] Módulo de treinamentos
+- [ ] Relatórios e estatísticas
+- [ ] API REST completa
+- [ ] Aplicativo mobile (React Native)
+
+### Melhorias Técnicas
+- [ ] Testes automatizados (Jest + Testing Library)
+- [ ] Storybook para componentes
+- [ ] PWA (Progressive Web App)
+- [ ] CI/CD com GitHub Actions
+- [ ] Monitoramento e analytics
+- [ ] Cache otimizado
+- [ ] Internacionalização (i18n)
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+## 📞 Suporte
+
+Para suporte e dúvidas:
+- 📧 Email: suporte@ddm.com
+- 💬 Discord: [Servidor DDM]
+- 📱 WhatsApp: +55 (11) 99999-9999
+
+## 🏆 Créditos
+
+Desenvolvido pela equipe do Departamento de Desenvolvimento Militar (DDM).
+
+---
+
+**Status**: ✅ Em produção | **Versão**: 1.0.0 | **Última atualização**: Junho 2025
