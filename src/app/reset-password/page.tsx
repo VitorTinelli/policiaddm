@@ -19,31 +19,36 @@ function ResetPasswordForm() {
   const searchParams = useSearchParams();
 
   const password = watch('password');
-
   useEffect(() => {
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
+    const token = searchParams.get('token');
+    const type = searchParams.get('type');
     
-    if (!accessToken || !refreshToken) {
+    // Verificar se é um link de recuperação válido do Supabase
+    if ((!accessToken || !refreshToken) && (!token || type !== 'recovery')) {
       setError('Link de recuperação inválido ou expirado. Solicite um novo link.');
     }
   }, [searchParams]);
 
-  const onSubmit = async (data: ResetPasswordInputs) => {
-    setLoading(true);
+  const onSubmit = async (data: ResetPasswordInputs) => {    setLoading(true);
     setMessage('');
     setError('');
 
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
+    const token = searchParams.get('token');
+    const type = searchParams.get('type');
 
-    if (!accessToken || !refreshToken) {
+    // Verificar se temos os tokens necessários
+    if ((!accessToken || !refreshToken) && (!token || type !== 'recovery')) {
       setError('Token de recuperação não encontrado. Solicite um novo link.');
       setLoading(false);
       return;
     }
 
-    try { const response = await fetch('/api/auth/password', {
+    try {
+      const response = await fetch('/api/auth/password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -51,8 +56,10 @@ function ResetPasswordForm() {
         body: JSON.stringify({
           action: 'reset',
           password: data.password,
-          accessToken,
-          refreshToken,
+          accessToken: accessToken || token,
+          refreshToken: refreshToken || '',
+          token: token,
+          type: type,
         }),
       });
 
@@ -154,7 +161,7 @@ function ResetPasswordForm() {
         {error.includes('Link de recuperação inválido') && (
           <div className="text-center mt-2">
             <Link 
-              href="/forgot-password" 
+              href="/forgotPassword" 
               className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 hover:underline transition-all text-sm"
             >
               Solicitar novo link de recuperação

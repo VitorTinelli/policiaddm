@@ -6,14 +6,13 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABAS
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export async function POST(request: NextRequest) {
-  try {
-    const { action, email, password, accessToken, refreshToken } = await request.json();
+export async function POST(request: NextRequest) {  try {
+    const { action, email, password, accessToken, refreshToken, token, type } = await request.json();
 
     if (action === 'forgot') {
       return await handleForgotPassword(email);
     } else if (action === 'reset') {
-      return await handleResetPassword(password, accessToken, refreshToken);
+      return await handleResetPassword(password, accessToken, refreshToken, token, type);
     } else {
       return NextResponse.json(
         { error: 'Ação não reconhecida' },
@@ -82,8 +81,9 @@ async function handleForgotPassword(email: string) {
   );
 }
 
-async function handleResetPassword(password: string, accessToken: string, refreshToken: string) {
-  if (!password || !accessToken || !refreshToken) {
+async function handleResetPassword(password: string, accessToken?: string, refreshToken?: string, token?: string, type?: string) {
+  // Verificar se temos pelo menos um tipo de token válido
+  if (!password || ((!accessToken || !refreshToken) && (!token || type !== 'recovery'))) {
     return NextResponse.json(
       { error: 'Dados incompletos para redefinição de senha' },
       { status: 400 }
@@ -97,20 +97,44 @@ async function handleResetPassword(password: string, accessToken: string, refres
       { status: 400 }
     );
   }
-
-  // Criar cliente Supabase com os tokens do usuário
+  // Criar cliente Supabase
   const userSupabase = createClient(supabaseUrl, supabaseKey);
   
-  // Definir a sessão com os tokens recebidos
-  const { data: { user }, error: sessionError } = await userSupabase.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  });
+  let user;
+  
+  if (accessToken && refreshToken) {
+    // Usar tokens de acesso se disponíveis
+    const { data: { user: sessionUser }, error: sessionError } = await userSupabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
 
-  if (sessionError || !user) {
-    console.error('Erro ao definir sessão:', sessionError);
+    if (sessionError || !sessionUser) {
+      console.error('Erro ao definir sessão:', sessionError);
+      return NextResponse.json(
+        { error: 'Token de recuperação inválido ou expirado' },
+        { status: 400 }
+      );
+    }
+    user = sessionUser;
+  } else if (token && type === 'recovery') {
+    // Verificar token de recuperação
+    const { data, error: verifyError } = await userSupabase.auth.verifyOtp({
+      token_hash: token,
+      type: 'recovery'
+    });
+
+    if (verifyError || !data.user) {
+      console.error('Erro ao verificar token:', verifyError);
+      return NextResponse.json(
+        { error: 'Token de recuperação inválido ou expirado' },
+        { status: 400 }
+      );
+    }
+    user = data.user;
+  } else {
     return NextResponse.json(
-      { error: 'Token de recuperação inválido ou expirado' },
+      { error: 'Token de recuperação não encontrado' },
       { status: 400 }
     );
   }
