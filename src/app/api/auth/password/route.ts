@@ -81,77 +81,114 @@ async function handleForgotPassword(email: string) {
   );
 }
 
+// Função para lidar com redefinição de senha
 async function handleResetPassword(password: string, accessToken?: string, refreshToken?: string, token?: string, type?: string) {
-  // Verificar se temos pelo menos um tipo de token válido
-  if (!password || ((!accessToken || !refreshToken) && (!token || type !== 'recovery'))) {
+  // Validar senha
+  if (!password) {
     return NextResponse.json(
-      { error: 'Dados incompletos para redefinição de senha' },
+      { error: 'Senha é obrigatória' },
       { status: 400 }
     );
   }
 
-  // Validar senha
   if (password.length < 6) {
     return NextResponse.json(
       { error: 'A senha deve ter pelo menos 6 caracteres' },
       { status: 400 }
     );
   }
-  const userSupabase = createClient(supabaseUrl, supabaseKey);
-  
-  if (accessToken && refreshToken) {
-    // Usar tokens de acesso se disponíveis
-    const { data: { user: sessionUser }, error: sessionError } = await userSupabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
 
-    if (sessionError || !sessionUser) {
-      console.error('Erro ao definir sessão:', sessionError);
+  try {
+    // Método 1: Se temos access_token e refresh_token (método tradicional)
+    if (accessToken && refreshToken) {
+      const userSupabase = createClient(supabaseUrl, supabaseKey);
+      
+      const { data: { user }, error: sessionError } = await userSupabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (sessionError || !user) {
+        console.error('Erro ao definir sessão:', sessionError);
+        return NextResponse.json(
+          { error: 'Token de recuperação inválido ou expirado' },
+          { status: 400 }
+        );
+      }
+
+      // Atualizar a senha
+      const { error: updateError } = await userSupabase.auth.updateUser({
+        password: password,
+      });
+
+      if (updateError) {
+        console.error('Erro ao atualizar senha:', updateError);
+        return NextResponse.json(
+          { error: 'Erro ao atualizar senha. Tente novamente.' },
+          { status: 500 }
+        );
+      }
+
       return NextResponse.json(
-        { error: 'Token de recuperação inválido ou expirado' },
-        { status: 400 }
+        { message: 'Senha alterada com sucesso!' },
+        { status: 200 }
       );
     }
-  } else if (token && type === 'recovery') {
-    // Verificar token de recuperação
-    const { data, error: verifyError } = await userSupabase.auth.verifyOtp({
-      token_hash: token,
-      type: 'recovery'
-    });
+      // Método 2: Se temos um token de recovery (método recomendado pela documentação)
+    if (token && type === 'recovery') {
+      const userSupabase = createClient(supabaseUrl, supabaseKey);
+      
+      // Trocar o código pelo session usando o token de recovery
+      const { data, error: exchangeError } = await userSupabase.auth.exchangeCodeForSession(token);
+      
+      if (exchangeError || !data.session || !data.user) {
+        console.error('Erro ao trocar código por sessão:', exchangeError);
+        return NextResponse.json(
+          { error: 'Token de recuperação inválido ou expirado' },
+          { status: 400 }
+        );
+      }
 
-    if (verifyError || !data.user) {
-      console.error('Erro ao verificar token:', verifyError);
+      // Definir a sessão obtida
+      const { error: sessionError } = await userSupabase.auth.setSession(data.session);
+      
+      if (sessionError) {
+        console.error('Erro ao definir sessão:', sessionError);
+        return NextResponse.json(
+          { error: 'Erro ao processar token de recuperação' },
+          { status: 400 }
+        );
+      }
+
+      // Atualizar a senha do usuário
+      const { error: updateError } = await userSupabase.auth.updateUser({
+        password: password,
+      });
+
+      if (updateError) {
+        console.error('Erro ao atualizar senha:', updateError);
+        return NextResponse.json(
+          { error: 'Erro ao atualizar senha. Tente novamente.' },
+          { status: 500 }
+        );
+      }
+
       return NextResponse.json(
-        { error: 'Token de recuperação inválido ou expirado' },
-        { status: 400 }
+        { message: 'Senha alterada com sucesso!' },
+        { status: 200 }
       );
     }
-  } else {
+
     return NextResponse.json(
       { error: 'Token de recuperação não encontrado' },
       { status: 400 }
     );
-  }
 
-  // Atualizar a senha do usuário
-  const { error: updateError } = await userSupabase.auth.updateUser({
-    password: password,
-  });
-
-  if (updateError) {
-    console.error('Erro ao atualizar senha:', updateError);
+  } catch (error) {
+    console.error('Erro ao processar redefinição de senha:', error);
     return NextResponse.json(
-      { error: 'Erro ao atualizar senha. Tente novamente.' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
-
-  // Opcional: Invalidar todas as sessões existentes por segurança
-  await userSupabase.auth.signOut();
-
-  return NextResponse.json(
-    { message: 'Senha alterada com sucesso!' },
-    { status: 200 }
-  );
 }

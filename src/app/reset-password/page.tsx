@@ -18,20 +18,19 @@ function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const password = watch('password');
-  useEffect(() => {
+  const password = watch('password');  useEffect(() => {
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     const token = searchParams.get('token');
     const type = searchParams.get('type');
     
-    // Verificar se é um link de recuperação válido do Supabase
+    // Verificar se é um link de recuperação válido
     if ((!accessToken || !refreshToken) && (!token || type !== 'recovery')) {
       setError('Link de recuperação inválido ou expirado. Solicite um novo link.');
     }
   }, [searchParams]);
-
-  const onSubmit = async (data: ResetPasswordInputs) => {    setLoading(true);
+  const onSubmit = async (data: ResetPasswordInputs) => {
+    setLoading(true);
     setMessage('');
     setError('');
 
@@ -56,10 +55,10 @@ function ResetPasswordForm() {
         body: JSON.stringify({
           action: 'reset',
           password: data.password,
-          accessToken: accessToken || token,
-          refreshToken: refreshToken || '',
-          token: token,
-          type: type,
+          accessToken,
+          refreshToken,
+          token,
+          type,
         }),
       });
 
