@@ -168,14 +168,14 @@ async function handleCompanyCourse(body: CompanyCourseRequestBody) {
         );
       }
     } else {
-      // Criar novo militar
       const { error: insertError } = await supabase
         .from('militares')
         .insert([
           {
             nick: courseStudent,
             email: '',
-            patente: 1, // ID da patente Soldado
+            patente: 1,
+            pago: false,
             status: 'aguardando',
             ativo: true,
             'tag-promotor': instructorData.tag
@@ -192,7 +192,6 @@ async function handleCompanyCourse(body: CompanyCourseRequestBody) {
     }
   }
 
-  // Buscar dados do aluno
   const { data: studentData, error: studentError } = await supabase
     .from('militares')
     .select('id')
