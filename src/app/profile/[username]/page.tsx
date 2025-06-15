@@ -11,11 +11,11 @@ interface MilitarData {
   nick: string;
   patente: number; 
   patente_nome?: string; 
-  pago?: boolean; 
+  contrato?: boolean; 
   tag?: string;
   'tag-promotor'?: string;
   email?: string;
-  status: string;
+  acesso_system: string;
   ativo?: boolean;
   created_at: string;
   missaoFormatada: string;
@@ -230,9 +230,8 @@ const ProfilesContent = memo(function ProfilesContent() {
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{militar.nick}</h1>
                 <div className="bg-gray-900 dark:bg-black text-yellow-400 px-3 py-1 rounded-md text-lg font-semibold inline-block mb-2">
                   {militar.patente_nome || 'Soldado'}
-                </div>
-                {militar.pago && (
-                  <div className="text-yellow-600 dark:text-yellow-400 font-medium mb-2">✅ Militar Pago</div>
+                </div>                {militar.contrato && (
+                  <div className="text-yellow-600 dark:text-yellow-400 font-medium mb-2">✅ Militar Contratado</div>
                 )}
                 {militar.tag && (
                   <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded font-bold inline-block">
@@ -270,8 +269,7 @@ const ProfilesContent = memo(function ProfilesContent() {
                 </div>
               </div>
             </div>
-
-            <div className="space-y-3">
+            <div className="space-y-3">              
               <div className="flex justify-between items-center">
                 <span className="font-medium text-gray-600 dark:text-gray-300">Status:</span>
                 <span className={`font-semibold ${
@@ -280,6 +278,16 @@ const ProfilesContent = memo(function ProfilesContent() {
                     : 'text-red-600 dark:text-red-400'
                 }`}>
                   {militar.ativo ? 'Ativo' : 'Inativo'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-600 dark:text-gray-300">Contrato:</span>
+                <span className={`font-semibold ${
+                  militar.contrato 
+                    ? 'text-green-600 dark:text-green-400' 
+                    : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {militar.contrato ? 'Sim' : 'Não'}
                 </span>
               </div>
               <div className="flex justify-between items-center">

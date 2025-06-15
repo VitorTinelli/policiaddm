@@ -5,21 +5,21 @@ interface Militar {
   id: string;
   nick: string;
   email: string;
-  patente?: number; // Agora é ID da patente
-  patente_nome?: string; // Nome da patente vindo do JOIN
-  pago?: boolean; // Mudou de cargo para pago
+  patente?: number; 
+  patente_nome?: string; 
+  contrato?: boolean; 
   tag?: string;
   'tag-promotor'?: string;
-  status?: string;
+  acesso_system?: boolean; 
   ativo?: boolean;
   created_at?: string;
 }
 
 interface Curso {
   id: string;
-  curso: number; // Agora é o ID da tabela cursos-companhias
-  curso_nome?: string; // Nome do curso vindo do JOIN
-  curso_sigla?: string; // Sigla do curso vindo do JOIN
+  curso: number;
+  curso_nome?: string; 
+  curso_sigla?: string; 
   militar: string;
   'dataAplicação': string;
   'horaAplicação': string;
@@ -440,9 +440,7 @@ export async function GET(request: NextRequest) {
 
     // Ordena o histórico por data decrescente
     historico.sort((a, b) => b.data.getTime() - a.data.getTime());    
-    
-    // Formata a missão
-    const missao = `[DCC] ${militar.patente_nome || 'Soldado'}${militar.pago ? ' (Pago)' : ''} [${militar['tag-promotor'] || militar.tag || 'DDM'}]`;
+    const missao = `[DDM] ${militar.patente_nome || 'Soldado'} [${militar['tag-promotor'] || militar.tag || 'DDM'}]`;
 
     return NextResponse.json({
       success: true,

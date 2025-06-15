@@ -10,7 +10,7 @@ interface SessionData {
     patente?: string;
     cargo?: string;
     tag?: string;
-    status?: string;
+    status?: string; // Mantém para outras referências não relacionadas ao militar
   };
   access_token: string;
 }

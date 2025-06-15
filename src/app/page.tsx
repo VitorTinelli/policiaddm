@@ -20,10 +20,10 @@ interface MilitarData {
   nick: string;
   patente: number;
   patente_nome?: string;
-  pago?: boolean; 
+  contrato?: boolean; 
   tag?: string;
   email?: string;
-  status: string;
+  acesso_system: string;
   ativo?: boolean;
   created_at: string;
   missaoFormatada: string;
@@ -140,9 +140,8 @@ export default function Homepage() {
                   </div>
                   <div className="flex-1 text-center md:text-center lg:text-left">
                     <h2 className="text-3xl sm:text-2xl md:text-xl lg:text-3xl font-bold mb-2 text-gray-900 dark:text-white">{profileData.militar.nick}</h2>
-                    <div className="text-xl sm:text-lg md:text-base lg:text-xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">{profileData.militar.patente_nome || 'Soldado'}</div>
-                    {profileData.militar.pago && (
-                      <div className="text-lg sm:text-base md:text-sm lg:text-lg text-yellow-600 dark:text-yellow-400 mb-1">✅ Militar Pago</div>
+                    <div className="text-xl sm:text-lg md:text-base lg:text-xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">{profileData.militar.patente_nome || 'Soldado'}</div>                    {profileData.militar.contrato && (
+                      <div className="text-lg sm:text-base md:text-sm lg:text-lg text-yellow-600 dark:text-yellow-400 mb-1">✅ Militar Contratado</div>
                     )}
                     {profileData.militar.tag && (
                       <div className="inline-block bg-gray-900 dark:bg-black text-yellow-400 font-bold px-2 py-1 rounded text-base sm:text-sm md:text-xs lg:text-base mb-2">

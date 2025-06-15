@@ -15,6 +15,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Verificar se o militar existe e está elegível para registro
+    const { data: militar, error: militarError } = await supabase
+      .from('militares')
+      .select('id, nick, ativo, acesso_system')
+      .eq('nick', nick)
+      .single()
+
+    if (militarError || !militar) {
+      return NextResponse.json(
+        { error: 'Militar não encontrado no sistema' },
+        { status: 404 }
+      )
+    }
+
+    if (!militar.ativo) {
+      return NextResponse.json(
+        { error: 'Militar inativo. Entre em contato com um superior.' },
+        { status: 403 }
+      )
+    }
+
+    if (militar.acesso_system) {
+      return NextResponse.json(
+        { error: 'Militar já possui acesso ao sistema.' },
+        { status: 409 }
+      )
+    }
+
+    // Criar usuário no Supabase Auth
     const { error: authError } = await supabase.auth.signUp({ email, password })
     
     if (authError) {
@@ -25,11 +54,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Atualizar militar: adicionar email e liberar acesso ao sistema
     const { error: updateError } = await supabase
       .from('militares')
       .update({ 
         email,
-        status: 'ativo'
+        acesso_system: true
       })
       .eq('nick', nick)
 
@@ -41,7 +71,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ 
+      success: true,
+      message: 'Conta criada com sucesso! Acesso ao sistema liberado.'
+    })
   } catch (error) {
     console.error('Erro no register:', error)
     return NextResponse.json(

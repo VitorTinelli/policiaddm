@@ -167,16 +167,15 @@ async function handleCompanyCourse(body: CompanyCourseRequestBody) {
           { status: 400 }
         );
       }
-    } else {
-      const { error: insertError } = await supabase
+    } else {      const { error: insertError } = await supabase
         .from('militares')
         .insert([
           {
             nick: courseStudent,
             email: '',
             patente: 1,
-            pago: false,
-            status: 'aguardando',
+            contrato: false,
+            acesso_system: false, // Será definido como true apenas no registro
             ativo: true,
             'tag-promotor': instructorData.tag
           }

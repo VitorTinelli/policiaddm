@@ -10,12 +10,10 @@ export async function POST(request: NextRequest) {
         { error: 'username e password são obrigatórios' },
         { status: 400 }
       );
-    }
-
-    // Buscar o email do usuário pelo nickname
+    }    // Buscar o usuário pelo nickname e verificar as condições de acesso
     const { data: perfil, error: perfilError } = await supabase
       .from('militares')
-      .select('email')
+      .select('email, ativo, acesso_system')
       .eq('nick', username)
       .single();
 
@@ -24,6 +22,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Conta não encontrada ou nickname inválido' },
         { status: 404 }
+      );
+    }
+
+    // Verificar se o usuário está ativo e tem acesso ao sistema
+    if (!perfil.ativo) {
+      return NextResponse.json(
+        { error: 'Conta inativa. Entre em contato com o comando.' },
+        { status: 403 }
+      );
+    }
+
+    if (!perfil.acesso_system) {
+      return NextResponse.json(
+        { error: 'Acesso ao sistema não liberado. Entre em contato com o comando.' },
+        { status: 403 }
       );
     }
 
