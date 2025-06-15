@@ -99,10 +99,11 @@ async function handleResetPassword(password: string, accessToken?: string, refre
   }
 
   try {
-    // Método 1: Se temos access_token e refresh_token (método tradicional)
+    // Criar cliente Supabase para autenticação
+    const userSupabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Método 1: Se temos access_token e refresh_token (links de email padrão)
     if (accessToken && refreshToken) {
-      const userSupabase = createClient(supabaseUrl, supabaseKey);
-      
       const { data: { user }, error: sessionError } = await userSupabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
@@ -134,30 +135,34 @@ async function handleResetPassword(password: string, accessToken?: string, refre
         { status: 200 }
       );
     }
-      // Método 2: Se temos um token de recovery (método recomendado pela documentação)
+    
+    // Método 2: Se temos um token de recovery (PKCE flow)
     if (token && type === 'recovery') {
-      const userSupabase = createClient(supabaseUrl, supabaseKey);
+      // Verificar OTP para recuperação de senha
+      const { data, error: verifyError } = await userSupabase.auth.verifyOtp({
+        token_hash: token,
+        type: 'recovery',
+      });
       
-      // Trocar o código pelo session usando o token de recovery
-      const { data, error: exchangeError } = await userSupabase.auth.exchangeCodeForSession(token);
-      
-      if (exchangeError || !data.session || !data.user) {
-        console.error('Erro ao trocar código por sessão:', exchangeError);
+      if (verifyError || !data.user) {
+        console.error('Erro ao verificar token de recuperação:', verifyError);
         return NextResponse.json(
           { error: 'Token de recuperação inválido ou expirado' },
           { status: 400 }
         );
       }
 
-      // Definir a sessão obtida
-      const { error: sessionError } = await userSupabase.auth.setSession(data.session);
-      
-      if (sessionError) {
-        console.error('Erro ao definir sessão:', sessionError);
-        return NextResponse.json(
-          { error: 'Erro ao processar token de recuperação' },
-          { status: 400 }
-        );
+      // Se temos uma sessão válida, definir ela
+      if (data.session) {
+        const { error: sessionError } = await userSupabase.auth.setSession(data.session);
+        
+        if (sessionError) {
+          console.error('Erro ao definir sessão:', sessionError);
+          return NextResponse.json(
+            { error: 'Erro ao processar token de recuperação' },
+            { status: 400 }
+          );
+        }
       }
 
       // Atualizar a senha do usuário

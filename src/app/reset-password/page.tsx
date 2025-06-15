@@ -15,29 +15,68 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [tokens, setTokens] = useState<{
+    accessToken?: string;
+    refreshToken?: string;
+    token?: string;
+    type?: string;
+  }>({});
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const password = watch('password');  useEffect(() => {
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    const token = searchParams.get('token');
-    const type = searchParams.get('type');
+  const password = watch('password');
+
+  useEffect(() => {
+    // Função para extrair tokens tanto de URL fragments quanto de query parameters
+    const extractTokens = () => {
+      // Primeiro, verificar query parameters
+      const accessToken = searchParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token');
+      const token = searchParams.get('token');
+      const type = searchParams.get('type');
+        // Se encontramos nos query parameters, usar eles
+      if ((accessToken && refreshToken) || (token && type === 'recovery')) {
+        return { 
+          accessToken: accessToken || undefined, 
+          refreshToken: refreshToken || undefined, 
+          token: token || undefined, 
+          type: type || undefined 
+        };
+      }
+      
+      // Se não, verificar URL fragments (hash)
+      if (typeof window !== 'undefined') {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const hashAccessToken = hashParams.get('access_token');
+        const hashRefreshToken = hashParams.get('refresh_token');
+        const hashToken = hashParams.get('token');
+        const hashType = hashParams.get('type');
+        
+        return {
+          accessToken: hashAccessToken || undefined,
+          refreshToken: hashRefreshToken || undefined,
+          token: hashToken || undefined,
+          type: hashType || undefined
+        };
+      }
+      
+      return {};
+    };
+
+    const extractedTokens = extractTokens();
+    setTokens(extractedTokens);
     
     // Verificar se é um link de recuperação válido
+    const { accessToken, refreshToken, token, type } = extractedTokens;
     if ((!accessToken || !refreshToken) && (!token || type !== 'recovery')) {
       setError('Link de recuperação inválido ou expirado. Solicite um novo link.');
     }
-  }, [searchParams]);
-  const onSubmit = async (data: ResetPasswordInputs) => {
+  }, [searchParams]);  const onSubmit = async (data: ResetPasswordInputs) => {
     setLoading(true);
     setMessage('');
     setError('');
 
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    const token = searchParams.get('token');
-    const type = searchParams.get('type');
+    const { accessToken, refreshToken, token, type } = tokens;
 
     // Verificar se temos os tokens necessários
     if ((!accessToken || !refreshToken) && (!token || type !== 'recovery')) {
@@ -158,8 +197,7 @@ function ResetPasswordForm() {
         </div>
         
         {error.includes('Link de recuperação inválido') && (
-          <div className="text-center mt-2">
-            <Link 
+          <div className="text-center mt-2">            <Link 
               href="/forgotPassword" 
               className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 hover:underline transition-all text-sm"
             >
