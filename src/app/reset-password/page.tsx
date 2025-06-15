@@ -118,9 +118,8 @@ function ResetPasswordForm() {
       setLoading(false);
     }
   };
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center p-4 lg:p-4 md:p-2 sm:p-1">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 lg:p-8 md:p-6 sm:p-6 w-full max-w-md lg:max-w-lg md:max-w-md sm:max-w-none sm:mx-2">
+  return (    <div className="min-h-screen bg-gray-50 dark:bg-neutral-900 flex items-center justify-center p-4 lg:p-4 md:p-2 sm:p-1">
+      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md p-8 lg:p-8 md:p-6 sm:p-6 w-full max-w-md lg:max-w-lg md:max-w-md sm:max-w-none sm:mx-2">
         <div className="text-center mb-8 lg:mb-8 md:mb-6 sm:mb-6">
           <h1 className="text-3xl lg:text-3xl md:text-2xl sm:text-xl font-bold text-black dark:text-yellow-400 mb-2">
             Redefinir Senha
@@ -212,9 +211,8 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+    <Suspense fallback={      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-900">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
       </div>
     }>
       <ResetPasswordForm />

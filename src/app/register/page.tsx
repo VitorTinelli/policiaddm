@@ -130,13 +130,12 @@ export default function RegisterPage() {
   if (user) {
     return null;
   }
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-neutral-900">
+      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md p-8 w-full max-w-md">
         {step === 'nick' && (
           <form onSubmit={handleNickSubmit}>
-            <h2 className="text-2xl font-bold mb-6 text-center text-black dark:text-yellow-400">
+            <h2 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-yellow-400">
               Etapa 1: Verifique seu Habbo
             </h2>
             

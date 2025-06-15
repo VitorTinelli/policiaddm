@@ -66,10 +66,9 @@ function TagPage() {
     }, [tag, isValidTag, session?.access_token]);
 
     return (
-        <>
-            <Header />
-            <div className="min-h-[calc(100dvh-16dvh)] flex items-center justify-center bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-4 lg:p-6">
-                <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
+        <>            <Header />
+            <div className="min-h-[calc(100dvh-16dvh)] flex items-center justify-center bg-gray-50 dark:bg-neutral-900 p-4 lg:p-6">
+                <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-md w-full max-w-md">
                     <h2 className="text-2xl font-bold mb-8 text-center text-gray-900 dark:text-yellow-400">
                         Criação de TAG
                     </h2>

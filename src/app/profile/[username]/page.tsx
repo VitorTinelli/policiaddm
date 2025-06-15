@@ -146,11 +146,10 @@ const ProfilesContent = memo(function ProfilesContent() {
       default: return 'Indefinido';
     }
   }, []);
-
   const getHistoryItemBorderColor = (tipo: string) => {
     switch (tipo) {
-      case 'curso': return 'border-l-blue-500';
-      case 'promocao': return 'border-l-green-500';
+      case 'curso': return 'border-l-yellow-500';
+      case 'promocao': return 'border-l-yellow-500';
       case 'punicao': return 'border-l-red-500';
       case 'tag': return 'border-l-yellow-500';
       default: return 'border-l-gray-400';
@@ -159,21 +158,22 @@ const ProfilesContent = memo(function ProfilesContent() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'aprovado': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'rejeitado': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'aguardando': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'aprovado': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+      case 'rejeitado': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+      case 'aguardando': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
-
   if (loading) {
     return (
       <>
         <Header />
-        <div className="min-h-[calc(100vh-16vh)] bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-8 relative">
-          <div className="flex justify-center items-center h-80 text-xl text-white bg-black bg-opacity-30 rounded-lg mx-auto max-w-2xl">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mr-3"></div>
-            Carregando perfil...
+        <div className="min-h-[calc(100vh-16vh)] bg-gray-50 dark:bg-neutral-900 p-8 relative">
+          <div className="flex justify-center items-center h-80 bg-white dark:bg-neutral-800 rounded-lg shadow-md mx-auto max-w-2xl">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+              <p className="text-gray-900 dark:text-white text-xl">Carregando perfil...</p>
+            </div>
           </div>
         </div>
         <Footer />
@@ -185,12 +185,12 @@ const ProfilesContent = memo(function ProfilesContent() {
     return (
       <>
         <Header />
-        <div className="min-h-[calc(100vh-16vh)] bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-8 relative">
-          <div className="flex flex-col justify-center items-center h-80 text-xl text-white bg-black bg-opacity-30 rounded-lg mx-auto max-w-2xl">
-            <p className="mb-4">{error}</p>
+        <div className="min-h-[calc(100vh-16vh)] bg-gray-50 dark:bg-neutral-900 p-8 relative">
+          <div className="flex flex-col justify-center items-center h-80 bg-white dark:bg-neutral-800 rounded-lg shadow-md mx-auto max-w-2xl p-8">
+            <p className="mb-4 text-gray-900 dark:text-white text-xl text-center">{error}</p>
             <button 
               onClick={handleRefresh} 
-              className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg transition-colors duration-200"
+              className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-3 rounded-lg transition-colors duration-200 font-bold"
             >
               Tentar novamente
             </button>
@@ -201,13 +201,12 @@ const ProfilesContent = memo(function ProfilesContent() {
     );
   }
 
-  if (!profileData) {
-    return (
+  if (!profileData) {    return (
       <>
         <Header />
-        <div className="min-h-[calc(100vh-16vh)] bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-8 relative">
-          <div className="flex justify-center items-center h-80 text-xl text-white bg-black bg-opacity-30 rounded-lg mx-auto max-w-2xl">
-            Perfil não encontrado
+        <div className="min-h-[calc(100vh-16vh)] bg-gray-50 dark:bg-neutral-900 p-8 relative">
+          <div className="flex justify-center items-center h-80 bg-white dark:bg-neutral-800 rounded-lg shadow-md mx-auto max-w-2xl">
+            <p className="text-gray-900 dark:text-white text-xl">Perfil não encontrado</p>
           </div>
         </div>
         <Footer />
@@ -216,28 +215,27 @@ const ProfilesContent = memo(function ProfilesContent() {
   }
 
   const { militar } = profileData;
-
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-16vh)] bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-8 relative">
+      <div className="min-h-[calc(100vh-16vh)] bg-gray-50 dark:bg-neutral-900 p-8 relative">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Container esquerdo - Informações do militar */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-2xl h-fit">
+          <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md p-8 h-fit">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 pb-6 border-b-2 border-gray-100 dark:border-gray-700">
               <div className="flex-shrink-0">
                 <HabboProfilePicture username={militar.nick} size="l" direction='2' />
               </div>
               <div className="text-center sm:text-left">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{militar.nick}</h1>
-                <div className="bg-gray-900 dark:bg-gray-700 text-yellow-400 px-3 py-1 rounded-md text-lg font-semibold inline-block mb-2">
+                <div className="bg-gray-900 dark:bg-black text-yellow-400 px-3 py-1 rounded-md text-lg font-semibold inline-block mb-2">
                   {militar.patente_nome || 'Soldado'}
                 </div>
                 {militar.pago && (
-                  <div className="text-green-600 dark:text-green-400 font-medium mb-2">✅ Militar Pago</div>
+                  <div className="text-yellow-600 dark:text-yellow-400 font-medium mb-2">✅ Militar Pago</div>
                 )}
                 {militar.tag && (
-                  <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded font-bold inline-block">
+                  <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded font-bold inline-block">
                     [{militar.tag}]
                   </div>
                 )}
@@ -246,7 +244,7 @@ const ProfilesContent = memo(function ProfilesContent() {
 
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Missão</h3>
-              <div className="bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4 font-mono text-gray-900 dark:text-white break-words relative">
+              <div className="bg-gray-50 dark:bg-neutral-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4 font-mono text-gray-900 dark:text-white break-words relative">
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1">
                     {militar.missaoFormatada}
@@ -291,10 +289,8 @@ const ProfilesContent = memo(function ProfilesContent() {
                 </span>
               </div>
             </div>
-          </div>
-
-          {/* Container direito - Histórico */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-2xl h-fit">
+          </div>          {/* Container direito - Histórico */}
+          <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md p-8 h-fit">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 pb-4 border-b-2 border-gray-100 dark:border-gray-700">
               Histórico
             </h2>
@@ -365,13 +361,14 @@ const ProfilesContent = memo(function ProfilesContent() {
   );
 });
 
-function ProfilesPage() {
-  return (
+function ProfilesPage() {  return (
     <Suspense fallback={
-      <div className="min-h-[calc(100vh-16vh)] bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-8 relative">
-        <div className="flex justify-center items-center h-80 text-xl text-white">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mr-3"></div>
-          Carregando...
+      <div className="min-h-[calc(100vh-16vh)] bg-gray-50 dark:bg-neutral-900 p-8 relative">
+        <div className="flex justify-center items-center h-80 bg-white dark:bg-neutral-800 rounded-lg shadow-md mx-auto max-w-2xl">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+            <p className="text-gray-900 dark:text-white">Carregando...</p>
+          </div>
         </div>
       </div>
     }>

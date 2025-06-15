@@ -81,11 +81,10 @@ const PromotionPage = memo(() => {
     }
   }, [user?.email, promotionForm]);
 
-  return (
-    <>
+  return (    <>
       <Header />
-      <div className="min-h-[calc(100dvh-16dvh)] flex items-center justify-center bg-gradient-to-br from-yellow-300 to-green-600 dark:from-gray-800 dark:to-gray-900 p-4 lg:p-6">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-2xl">
+      <div className="min-h-[calc(100dvh-16dvh)] flex items-center justify-center bg-gray-50 dark:bg-neutral-900 p-4 lg:p-6">
+        <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-md w-full max-w-2xl">
           <h1 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-white">
             Promoções
           </h1>
