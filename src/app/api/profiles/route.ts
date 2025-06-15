@@ -65,17 +65,104 @@ interface HistoricoItem {
   aplicadorTag?: string;
   data: Date;
   dataFormatada: string;
-  status?: string;
-  icone: string;
+  status?: string;  icone: string;
   motivo?: string;
   patenteAtual?: string;
   novaPatente?: string;
+}
+
+// Função para verificar se o militar faz parte de uma companhia
+async function handleCompanyCheck(email: string | null, companyId: string | null) {
+  if (!email) {
+    return NextResponse.json(
+      { error: 'Email é obrigatório para verificar companhia' },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Primeiro, buscar o militar pelo email
+    const { data: militar, error: militarError } = await supabase
+      .from('militares')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (militarError || !militar) {
+      return NextResponse.json(
+        { error: 'Militar não encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Se companyId for fornecido, verifica se o militar faz parte dessa companhia específica
+    if (companyId) {
+      const { data, error } = await supabase
+        .from('militares-companhia')
+        .select('*')
+        .eq('militarfk', militar.id)
+        .eq('companhiafk', companyId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Erro ao verificar militar na companhia:', error);
+        return NextResponse.json(
+          { error: 'Erro interno do servidor' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        isMember: !!data,
+        relationship: data
+      });
+    }
+
+    // Se companyId não for fornecido, retorna todas as companhias do militar
+    const { data, error } = await supabase
+      .from('militares-companhia')
+      .select(`
+        *,
+        companhias (
+          id,
+          nome,
+          sigla
+        )
+      `)
+      .eq('militarfk', militar.id);
+
+    if (error) {
+      console.error('Erro ao buscar companhias do militar:', error);
+      return NextResponse.json(
+        { error: 'Erro interno do servidor' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      companies: data || []
+    });
+
+  } catch (error) {
+    console.error('Erro interno:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
+  }
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const nick = searchParams.get('nick');
   const email = searchParams.get('email');
+  const checkCompany = searchParams.get('checkCompany'); // Novo parâmetro para verificar companhia
+  const companyId = searchParams.get('companyId'); // ID da companhia para verificar
+
+  // Se for apenas para verificar companhia
+  if (checkCompany === 'true') {
+    return await handleCompanyCheck(email, companyId);
+  }
 
   if ((!nick || typeof nick !== 'string' || !nick.trim()) && 
       (!email || typeof email !== 'string' || !email.trim())) {

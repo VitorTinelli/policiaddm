@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useRequireAuth } from '../../commons/useRequireAuth';
+import { useCompanyAccess } from '../../commons/useCompanyAccess';
 import Header from '../../header/Header';
 import Footer from '../../footer/Footer';
 import { getCourseScript as getScript } from '../courseScripts';
@@ -36,10 +37,18 @@ export default function CompanyScriptsPage() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [script, setScript] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [loadingScript, setLoadingScript] = useState(false);  const [error, setError] = useState('');    // Dicionário de companhias disponíveis
+  const [loadingScript, setLoadingScript] = useState(false);
+  const [error, setError] = useState('');
+
   const availableCompanies = {
     'EFB': 'Escola de Formação Básica',
   };
+
+  const companyCodes = {
+    'EFB': 1,
+  };
+  const companyCode = companyCodes[companhia?.toUpperCase() as keyof typeof companyCodes];
+  const { hasAccess, loading: checkingAccess } = useCompanyAccess(user?.email, companyCode);
   const patentesMap = useMemo((): Record<number, string> => ({
     1: 'Soldado',
     2: 'Cabo',
@@ -55,7 +64,6 @@ export default function CompanyScriptsPage() {
     12: 'Comandante',
     13: 'Comandante-Geral'
   }), []);
-  
   const getPatenteName = useCallback((patenteId: number): string => {
     return patentesMap[patenteId] || `Patente ${patenteId}`;
   }, [patentesMap]);
@@ -108,7 +116,6 @@ export default function CompanyScriptsPage() {
   const copyPhrase = async (phrase: string) => {
     try {
       await navigator.clipboard.writeText(phrase);
-      // Feedback visual mais sutil
       const button = document.activeElement as HTMLButtonElement;
       if (button) {
         const originalText = button.textContent;
@@ -124,17 +131,19 @@ export default function CompanyScriptsPage() {
     } catch (err) {
       console.error('Erro ao copiar frase:', err);
       alert('Erro ao copiar frase. Tente selecionar e copiar manualmente.');
-    }  };
-
-  useEffect(() => {
-    if (companhia) {
+    }  };  useEffect(() => {
+    if (companhia && hasAccess) {
       fetchCourses();
     }
-  }, [companhia, fetchCourses]);
-  if (authLoading) {
+  }, [companhia, hasAccess, fetchCourses]);if (authLoading || checkingAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Carregando...</div>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
+          <div className="text-lg">
+            {authLoading ? 'Carregando...' : 'Verificando acesso...'}
+          </div>
+        </div>
       </div>
     );
   }
@@ -150,6 +159,33 @@ export default function CompanyScriptsPage() {
           <div className="max-w-4xl mx-auto">
             <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
               <strong>Erro:</strong> Companhia &apos;{companhia}&apos; não encontrada.
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Verificar se o usuário tem acesso à companhia
+  if (!hasAccess) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-neutral-900">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300 px-6 py-4 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L5.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <strong>Acesso Negado</strong>
+                  <p className="mt-1">
+                    Você não faz parte da {companyName}. Apenas militares da {companhia?.toUpperCase()} podem acessar esta área.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </main>
