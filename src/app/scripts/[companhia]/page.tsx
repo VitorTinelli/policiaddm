@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useRequireAuth } from '../../commons/useRequireAuth';
 import Header from '../../header/Header';
@@ -36,13 +36,11 @@ export default function CompanyScriptsPage() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [script, setScript] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [loadingScript, setLoadingScript] = useState(false);
-  const [error, setError] = useState('');    // Dicionário de companhias disponíveis
+  const [loadingScript, setLoadingScript] = useState(false);  const [error, setError] = useState('');    // Dicionário de companhias disponíveis
   const availableCompanies = {
     'EFB': 'Escola de Formação Básica',
   };
-
-  const patentesMap: Record<number, string> = {
+  const patentesMap = useMemo((): Record<number, string> => ({
     1: 'Soldado',
     2: 'Cabo',
     3: 'Sargento',
@@ -56,7 +54,7 @@ export default function CompanyScriptsPage() {
     11: 'Marechal',
     12: 'Comandante',
     13: 'Comandante-Geral'
-  };
+  }), []);
   
   const getPatenteName = useCallback((patenteId: number): string => {
     return patentesMap[patenteId] || `Patente ${patenteId}`;

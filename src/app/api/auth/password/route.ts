@@ -97,10 +97,7 @@ async function handleResetPassword(password: string, accessToken?: string, refre
       { status: 400 }
     );
   }
-  // Criar cliente Supabase
   const userSupabase = createClient(supabaseUrl, supabaseKey);
-  
-  let user;
   
   if (accessToken && refreshToken) {
     // Usar tokens de acesso se disponíveis
@@ -116,7 +113,6 @@ async function handleResetPassword(password: string, accessToken?: string, refre
         { status: 400 }
       );
     }
-    user = sessionUser;
   } else if (token && type === 'recovery') {
     // Verificar token de recuperação
     const { data, error: verifyError } = await userSupabase.auth.verifyOtp({
@@ -131,7 +127,6 @@ async function handleResetPassword(password: string, accessToken?: string, refre
         { status: 400 }
       );
     }
-    user = data.user;
   } else {
     return NextResponse.json(
       { error: 'Token de recuperação não encontrado' },
