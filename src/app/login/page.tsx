@@ -112,25 +112,21 @@ function LoginForm() {
           <div className="flex flex-col sm:flex-row gap-2 lg:gap-2 md:gap-3 sm:gap-3">
             <Link 
               href="/register"
-              className="flex-1 w-full h-10 lg:h-10 md:h-11 sm:h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-md transition-colors duration-200 flex items-center justify-center text-center text-base lg:text-base md:text-sm sm:text-sm"
-            >
+              className="flex-1 w-full h-10 lg:h-10 md:h-11 sm:h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-md transition-colors duration-200 flex items-center justify-center text-center text-base lg:text-base md:text-sm sm:text-sm">
               Registrar
             </Link>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 w-full h-10 lg:h-10 md:h-11 sm:h-12 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:dark:bg-gray-600 text-black disabled:dark:text-gray-400 font-bold rounded-md transition-colors duration-200 disabled:cursor-not-allowed text-base lg:text-base md:text-sm sm:text-sm"
-            >
+              className="flex-1 w-full h-10 lg:h-10 md:h-11 sm:h-12 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:dark:bg-gray-600 text-black disabled:dark:text-gray-400 font-bold rounded-md transition-colors duration-200 disabled:cursor-not-allowed text-base lg:text-base md:text-sm sm:text-sm">
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </div>
-        </form>
-
+        </form>        
         <div className="text-center mt-4 lg:mt-4 md:mt-6 sm:mt-6">
           <Link 
-            href="#" 
-            className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 hover:underline transition-all text-sm lg:text-sm md:text-sm sm:text-sm"
-          >
+            href="/forgotPassword" 
+            className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 hover:underline transition-all text-sm lg:text-sm md:text-sm sm:text-sm">
             Esqueci minha senha
           </Link>
         </div>
