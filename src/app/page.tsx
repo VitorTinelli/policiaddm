@@ -229,6 +229,15 @@ export default function Homepage() {
                       <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-xs md:text-xs lg:text-sm">Registrar cursos para militares</div>
                     </div>
                   </Link>
+                  <Link href="/scripts/efb" className="group flex items-center gap-4 sm:gap-3 md:gap-3 lg:gap-4 p-4 sm:p-3 md:p-3 lg:p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-yellow-400 hover:-translate-y-1 transition-all duration-200 shadow-sm hover:shadow-md">
+                    <div className="w-12 h-12 sm:w-10 sm:h-10 md:w-8 md:h-8 lg:w-12 lg:h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center text-2xl sm:text-xl md:text-lg lg:text-2xl flex-shrink-0">
+                      📃
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-black dark:text-white text-lg sm:text-base md:text-sm lg:text-lg mb-1">Scripts</div>
+                      <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-xs md:text-xs lg:text-sm">Todos os scripts da Escola de Formação Básica</div>
+                    </div>
+                  </Link>
                 </div>
               </div>
             </div>
