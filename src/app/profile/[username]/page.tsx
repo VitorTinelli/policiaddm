@@ -230,9 +230,7 @@ const ProfilesContent = memo(function ProfilesContent() {
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{militar.nick}</h1>
                 <div className="bg-gray-900 dark:bg-black text-yellow-400 px-3 py-1 rounded-md text-lg font-semibold inline-block mb-2">
                   {militar.patente_nome || 'Soldado'}
-                </div>                {militar.contrato && (
-                  <div className="text-yellow-600 dark:text-yellow-400 font-medium mb-2">✅ Militar Contratado</div>
-                )}
+                </div>
                 {militar.tag && (
                   <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded font-bold inline-block">
                     [{militar.tag}]

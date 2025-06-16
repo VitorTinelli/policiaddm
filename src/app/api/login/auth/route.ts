@@ -10,7 +10,8 @@ export async function POST(request: NextRequest) {
         { error: 'username e password são obrigatórios' },
         { status: 400 }
       );
-    }    // Buscar o usuário pelo nickname e verificar as condições de acesso
+    }   
+     // Buscar o usuário pelo nickname e verificar as condições de acesso
     const { data: perfil, error: perfilError } = await supabase
       .from('militares')
       .select('email, ativo, acesso_system')
