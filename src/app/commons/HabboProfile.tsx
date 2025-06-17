@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface HabboBadge {
   badgeIndex: number;
@@ -27,22 +27,22 @@ const API_CONFIG = {
   timeout: 10000,
   retries: 2,
   headers: {
-    'Accept': 'application/json',
-    'User-Agent': 'Mozilla/5.0 (compatible; HabboProfileFetcher/1.0)',
+    Accept: "application/json",
+    "User-Agent": "Mozilla/5.0 (compatible; HabboProfileFetcher/1.0)",
   },
 } as const;
 
 export async function getHabboProfile(name: string): Promise<HabboProfile> {
-  if (!name || typeof name !== 'string' || !name.trim()) {
-    throw new Error('Nome é obrigatório e deve ser uma string válida');
+  if (!name || typeof name !== "string" || !name.trim()) {
+    throw new Error("Nome é obrigatório e deve ser uma string válida");
   }
 
   const cleanName = name.trim();
-  
+
   const urls = [
     `https://www.habbo.com.br/api/public/users?name=${encodeURIComponent(cleanName)}`,
     `https://api.allorigins.win/get?url=${encodeURIComponent(
-      `https://www.habbo.com.br/api/public/users?name=${encodeURIComponent(cleanName)}`
+      `https://www.habbo.com.br/api/public/users?name=${encodeURIComponent(cleanName)}`,
     )}`,
     `https://www.habbo.com/api/public/users?name=${encodeURIComponent(cleanName)}`,
   ];
@@ -51,13 +51,18 @@ export async function getHabboProfile(name: string): Promise<HabboProfile> {
 
   for (let attemptIndex = 0; attemptIndex < urls.length; attemptIndex++) {
     try {
-      console.log(`Tentativa ${attemptIndex + 1}: Buscando perfil de "${cleanName}"...`);
+      console.log(
+        `Tentativa ${attemptIndex + 1}: Buscando perfil de "${cleanName}"...`,
+      );
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        API_CONFIG.timeout,
+      );
 
       const response = await fetch(urls[attemptIndex], {
-        method: 'GET',
+        method: "GET",
         headers: API_CONFIG.headers,
         signal: controller.signal,
         next: { revalidate: 300 },
@@ -78,16 +83,16 @@ export async function getHabboProfile(name: string): Promise<HabboProfile> {
         try {
           data = JSON.parse(data.contents);
         } catch {
-          throw new Error('Erro ao processar resposta do proxy');
+          throw new Error("Erro ao processar resposta do proxy");
         }
       }
 
-      if (!data || typeof data !== 'object') {
-        throw new Error('Dados inválidos recebidos da API');
+      if (!data || typeof data !== "object") {
+        throw new Error("Dados inválidos recebidos da API");
       }
 
       if (!data.uniqueId || !data.name) {
-        throw new Error('Resposta da API não contém dados válidos do perfil');
+        throw new Error("Resposta da API não contém dados válidos do perfil");
       }
 
       console.log(`Perfil de "${cleanName}" encontrado com sucesso`);
@@ -95,44 +100,50 @@ export async function getHabboProfile(name: string): Promise<HabboProfile> {
       const profile: HabboProfile = {
         uniqueId: data.uniqueId,
         name: data.name,
-        figureString: data.figureString || '',
-        motto: data.motto || '',
+        figureString: data.figureString || "",
+        motto: data.motto || "",
         online: Boolean(data.online),
-        lastAccessTime: data.lastAccessTime || '',
-        memberSince: data.memberSince || '',
+        lastAccessTime: data.lastAccessTime || "",
+        memberSince: data.memberSince || "",
         profileVisible: Boolean(data.profileVisible),
         currentLevel: Number(data.currentLevel) || 0,
-        currentLevelCompletePercent: Number(data.currentLevelCompletePercent) || 0,
+        currentLevelCompletePercent:
+          Number(data.currentLevelCompletePercent) || 0,
         totalExperience: Number(data.totalExperience) || 0,
         starGemCount: Number(data.starGemCount) || 0,
-        selectedBadges: Array.isArray(data.selectedBadges) ? data.selectedBadges : [],
+        selectedBadges: Array.isArray(data.selectedBadges)
+          ? data.selectedBadges
+          : [],
       };
 
       return profile;
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       lastError = new Error(errorMessage);
-      
-      console.warn(`Tentativa ${attemptIndex + 1} falhou para "${cleanName}":`, errorMessage);
+
+      console.warn(
+        `Tentativa ${attemptIndex + 1} falhou para "${cleanName}":`,
+        errorMessage,
+      );
 
       if (attemptIndex === urls.length - 1) {
         break;
       }
 
       if (attemptIndex < urls.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
   }
 
   const finalError = new Error(
     `Não foi possível buscar o perfil do usuário "${cleanName}". ${
-      lastError?.message || 'Todas as tentativas falharam'
-    }`
+      lastError?.message || "Todas as tentativas falharam"
+    }`,
   );
 
-  console.error('Erro final:', finalError.message);
+  console.error("Erro final:", finalError.message);
   throw finalError;
 }
 
@@ -161,7 +172,7 @@ export function useHabboProfile(name: string | null) {
         }
       } catch (err) {
         if (!isCancelled) {
-          setError(err instanceof Error ? err.message : 'Erro desconhecido');
+          setError(err instanceof Error ? err.message : "Erro desconhecido");
           setProfile(null);
         }
       } finally {
@@ -182,10 +193,10 @@ export function useHabboProfile(name: string | null) {
 }
 
 export function isValidHabboUsername(name: string): boolean {
-  if (!name || typeof name !== 'string') return false;
-  
+  if (!name || typeof name !== "string") return false;
+
   const cleanName = name.trim();
   const habboNameRegex = /^[a-zA-Z0-9_-]{3,15}$/;
-  
+
   return habboNameRegex.test(cleanName);
 }

@@ -6,8 +6,15 @@
 export interface CacheUtils {
   clearAllProfileCaches: () => void;
   clearDuplicateProfileCaches: () => void;
-  clearOtherUsersCaches: (currentUserNick?: string, currentUserEmail?: string) => void;
-  isOwnProfile: (username: string, currentUserNick?: string, currentUserEmail?: string) => boolean;
+  clearOtherUsersCaches: (
+    currentUserNick?: string,
+    currentUserEmail?: string,
+  ) => void;
+  isOwnProfile: (
+    username: string,
+    currentUserNick?: string,
+    currentUserEmail?: string,
+  ) => boolean;
 }
 
 /**
@@ -15,15 +22,17 @@ export interface CacheUtils {
  */
 export function clearAllProfileCaches(): void {
   const keys = Object.keys(localStorage);
-  const profileCacheKeys = keys.filter(key => 
-    key.startsWith('profile_') || key.includes('_timestamp')
+  const profileCacheKeys = keys.filter(
+    (key) => key.startsWith("profile_") || key.includes("_timestamp"),
   );
-  
-  profileCacheKeys.forEach(key => {
+
+  profileCacheKeys.forEach((key) => {
     localStorage.removeItem(key);
   });
-  
-  console.log(`[Cache] Removidos ${profileCacheKeys.length} itens de cache de perfis`);
+
+  console.log(
+    `[Cache] Removidos ${profileCacheKeys.length} itens de cache de perfis`,
+  );
 }
 
 /**
@@ -31,14 +40,16 @@ export function clearAllProfileCaches(): void {
  */
 export function clearDuplicateProfileCaches(): void {
   const keys = Object.keys(localStorage);
-  const profileCacheKeys = keys.filter(key => key.startsWith('profile_') && !key.endsWith('_timestamp'));
-  
+  const profileCacheKeys = keys.filter(
+    (key) => key.startsWith("profile_") && !key.endsWith("_timestamp"),
+  );
+
   const seenProfiles = new Set<string>();
   let removedCount = 0;
-  
-  profileCacheKeys.forEach(key => {
-    const username = key.replace('profile_', '');
-    
+
+  profileCacheKeys.forEach((key) => {
+    const username = key.replace("profile_", "");
+
     if (seenProfiles.has(username.toLowerCase())) {
       // Perfil duplicado, remover
       localStorage.removeItem(key);
@@ -49,37 +60,52 @@ export function clearDuplicateProfileCaches(): void {
       seenProfiles.add(username.toLowerCase());
     }
   });
-  
+
   if (removedCount > 0) {
-    console.log(`[Cache] Total de caches duplicados removidos: ${removedCount}`);
+    console.log(
+      `[Cache] Total de caches duplicados removidos: ${removedCount}`,
+    );
   }
 }
 
 /**
  * Limpa caches de outros usuários, mantendo apenas o do usuário atual
  */
-export function clearOtherUsersCaches(currentUserNick?: string, currentUserEmail?: string): void {
+export function clearOtherUsersCaches(
+  currentUserNick?: string,
+  currentUserEmail?: string,
+): void {
   const keys = Object.keys(localStorage);
-  const profileCacheKeys = keys.filter(key => key.startsWith('profile_') && !key.endsWith('_timestamp'));
-  
+  const profileCacheKeys = keys.filter(
+    (key) => key.startsWith("profile_") && !key.endsWith("_timestamp"),
+  );
+
   let removedCount = 0;
-  
-  profileCacheKeys.forEach(key => {
-    const cachedUsername = key.replace('profile_', '');
-    
+
+  profileCacheKeys.forEach((key) => {
+    const cachedUsername = key.replace("profile_", "");
+
     // Verificar se é o próprio perfil
-    const isOwn = isOwnProfile(cachedUsername, currentUserNick, currentUserEmail);
-    
+    const isOwn = isOwnProfile(
+      cachedUsername,
+      currentUserNick,
+      currentUserEmail,
+    );
+
     if (!isOwn) {
       localStorage.removeItem(key);
       localStorage.removeItem(`${key}_timestamp`);
       removedCount++;
-      console.log(`[Cache] Cache removido para outro usuário: ${cachedUsername}`);
+      console.log(
+        `[Cache] Cache removido para outro usuário: ${cachedUsername}`,
+      );
     }
   });
-  
+
   if (removedCount > 0) {
-    console.log(`[Cache] Total de caches de outros usuários removidos: ${removedCount}`);
+    console.log(
+      `[Cache] Total de caches de outros usuários removidos: ${removedCount}`,
+    );
   }
 }
 
@@ -87,22 +113,28 @@ export function clearOtherUsersCaches(currentUserNick?: string, currentUserEmail
  * Verifica se o username corresponde ao usuário atual
  */
 export function isOwnProfile(
-  username: string, 
-  currentUserNick?: string, 
-  currentUserEmail?: string
+  username: string,
+  currentUserNick?: string,
+  currentUserEmail?: string,
 ): boolean {
   if (!username) return false;
-  
+
   // Verificar por nick
-  if (currentUserNick && currentUserNick.toLowerCase() === username.toLowerCase()) {
+  if (
+    currentUserNick &&
+    currentUserNick.toLowerCase() === username.toLowerCase()
+  ) {
     return true;
   }
-  
+
   // Verificar por email
-  if (currentUserEmail && currentUserEmail.toLowerCase() === username.toLowerCase()) {
+  if (
+    currentUserEmail &&
+    currentUserEmail.toLowerCase() === username.toLowerCase()
+  ) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -114,6 +146,6 @@ export function useCacheUtils(): CacheUtils {
     clearAllProfileCaches,
     clearDuplicateProfileCaches,
     clearOtherUsersCaches,
-    isOwnProfile
+    isOwnProfile,
   };
 }

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useAuth } from '../commons/AuthContext';
+import { useEffect, useState, useCallback } from "react";
+import { useAuth } from "../commons/AuthContext";
 
 interface UserProfile {
   id: string;
@@ -28,14 +28,16 @@ export function UserProfileComponent() {
 
     try {
       const isValid = await verifySessionWithAPI(session.access_token);
-      
+
       if (isValid) {
-        console.log('Sessão válida e atualizada');
+        console.log("Sessão válida e atualizada");
       } else {
-        setError('Sessão inválida. Faça login novamente.');
+        setError("Sessão inválida. Faça login novamente.");
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Erro ao verificar sessão');
+      setError(
+        error instanceof Error ? error.message : "Erro ao verificar sessão",
+      );
     } finally {
       setLoading(false);
     }
@@ -50,19 +52,19 @@ export function UserProfileComponent() {
       // antes de fazer outras chamadas
       if (session?.access_token) {
         const isValidSession = await verifySessionWithAPI(session.access_token);
-        
+
         if (!isValidSession) {
-          setError('Sessão expirada. Faça login novamente.');
+          setError("Sessão expirada. Faça login novamente.");
           return;
         }
       }
 
       // Fazer chamada para buscar dados do perfil
       // Exemplo usando fetch direto ou através de outra API
-      const response = await fetch('/api/user/profile', {
+      const response = await fetch("/api/user/profile", {
         headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -70,10 +72,10 @@ export function UserProfileComponent() {
         const profileData = await response.json();
         setProfile(profileData);
       } else {
-        throw new Error('Erro ao carregar perfil');
+        throw new Error("Erro ao carregar perfil");
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Erro desconhecido');
+      setError(error instanceof Error ? error.message : "Erro desconhecido");
     } finally {
       setLoading(false);
     }
@@ -93,7 +95,7 @@ export function UserProfileComponent() {
     return (
       <div className="p-4 bg-red-100 border border-red-300 rounded-lg">
         <p className="text-red-700">{error}</p>
-        <button 
+        <button
           onClick={refreshUserSession}
           className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
         >
@@ -106,26 +108,42 @@ export function UserProfileComponent() {
   return (
     <div className="p-4 bg-white rounded-lg shadow">
       <h2 className="text-xl font-bold mb-4">Perfil do Usuário</h2>
-      
+
       {profile ? (
         <div className="space-y-2">
-          <p><strong>Nick:</strong> {profile.nick}</p>
-          <p><strong>Email:</strong> {profile.email}</p>
-          <p><strong>Patente:</strong> {profile.patente}</p>
-          {profile.cargo && <p><strong>Cargo:</strong> {profile.cargo}</p>}
-          {profile.tag && <p><strong>Tag:</strong> {profile.tag}</p>}
-          <p><strong>Status:</strong> {profile.status}</p>
+          <p>
+            <strong>Nick:</strong> {profile.nick}
+          </p>
+          <p>
+            <strong>Email:</strong> {profile.email}
+          </p>
+          <p>
+            <strong>Patente:</strong> {profile.patente}
+          </p>
+          {profile.cargo && (
+            <p>
+              <strong>Cargo:</strong> {profile.cargo}
+            </p>
+          )}
+          {profile.tag && (
+            <p>
+              <strong>Tag:</strong> {profile.tag}
+            </p>
+          )}
+          <p>
+            <strong>Status:</strong> {profile.status}
+          </p>
         </div>
       ) : (
         <p>Dados do perfil não encontrados</p>
       )}
 
-      <button 
+      <button
         onClick={refreshUserSession}
         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         disabled={loading}
       >
-        {loading ? 'Verificando...' : 'Verificar Sessão'}
+        {loading ? "Verificando..." : "Verificar Sessão"}
       </button>
     </div>
   );

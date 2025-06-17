@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "SGD | Policia DDM",
-  description: "Sistema de gerenciamento de dados do Departamento de Desenvolvimento Militar",
+  description:
+    "Sistema de gerenciamento de dados do Departamento de Desenvolvimento Militar",
   icons: {
     icon: "/ddmLogo.png",
   },
@@ -30,7 +31,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}      >
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <AuthProvider>
           <CacheSecurityInitializer />
           {children}

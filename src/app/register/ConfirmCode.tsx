@@ -1,13 +1,13 @@
-import { getHabboProfile } from '../commons/HabboProfile'
-import type { HabboProfile } from '../commons/HabboProfile'
+import { getHabboProfile } from "../commons/HabboProfile";
+import type { HabboProfile } from "../commons/HabboProfile";
 
 /**
  * Interface para o resultado da confirmação do código
  */
 export interface ConfirmCodeResult {
-  success: boolean
-  error?: string
-  profile?: HabboProfile
+  success: boolean;
+  error?: string;
+  profile?: HabboProfile;
 }
 
 /**
@@ -16,44 +16,48 @@ export interface ConfirmCodeResult {
  * @param code - Código para verificar na missão
  * @returns Resultado da confirmação
  */
-export async function confirmCode(nick: string, code: string): Promise<ConfirmCodeResult> {
+export async function confirmCode(
+  nick: string,
+  code: string,
+): Promise<ConfirmCodeResult> {
   try {
     // Validação de entrada
-    if (!nick || typeof nick !== 'string' || !nick.trim()) {
+    if (!nick || typeof nick !== "string" || !nick.trim()) {
       return {
         success: false,
-        error: 'Nick é obrigatório'
-      }
+        error: "Nick é obrigatório",
+      };
     }
 
-    if (!code || typeof code !== 'string' || !code.trim()) {
+    if (!code || typeof code !== "string" || !code.trim()) {
       return {
         success: false,
-        error: 'Código é obrigatório'
-      }
+        error: "Código é obrigatório",
+      };
     }
 
-    const profile = await getHabboProfile(nick.trim())
-    
+    const profile = await getHabboProfile(nick.trim());
+
     if (profile.motto !== code.trim()) {
       return {
         success: false,
-        error: 'O código não confere com a sua missão. Atualize e tente novamente.',
-        profile
-      }
+        error:
+          "O código não confere com a sua missão. Atualize e tente novamente.",
+        profile,
+      };
     }
 
     return {
       success: true,
-      profile
-    }
-
+      profile,
+    };
   } catch (error) {
-    console.error('Erro ao confirmar código:', error)
-    
+    console.error("Erro ao confirmar código:", error);
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Erro ao verificar perfil'
-    }
+      error:
+        error instanceof Error ? error.message : "Erro ao verificar perfil",
+    };
   }
 }

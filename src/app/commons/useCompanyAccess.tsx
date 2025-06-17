@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 interface CompanyAccessResult {
   hasAccess: boolean;
@@ -6,7 +6,10 @@ interface CompanyAccessResult {
   error: string | null;
 }
 
-export function useCompanyAccess(userEmail: string | undefined, companyCode: number | undefined): CompanyAccessResult {
+export function useCompanyAccess(
+  userEmail: string | undefined,
+  companyCode: number | undefined,
+): CompanyAccessResult {
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,18 +24,20 @@ export function useCompanyAccess(userEmail: string | undefined, companyCode: num
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await fetch(`/api/profiles?checkCompany=true&email=${encodeURIComponent(userEmail)}&companyId=${companyCode}`);
-      
+
+      const response = await fetch(
+        `/api/profiles?checkCompany=true&email=${encodeURIComponent(userEmail)}&companyId=${companyCode}`,
+      );
+
       if (!response.ok) {
-        throw new Error('Erro ao verificar acesso à companhia');
+        throw new Error("Erro ao verificar acesso à companhia");
       }
 
       const data = await response.json();
       setHasAccess(data.isMember || false);
     } catch (err) {
-      console.error('Erro ao verificar acesso à companhia:', err);
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      console.error("Erro ao verificar acesso à companhia:", err);
+      setError(err instanceof Error ? err.message : "Erro desconhecido");
       setHasAccess(false);
     } finally {
       setLoading(false);

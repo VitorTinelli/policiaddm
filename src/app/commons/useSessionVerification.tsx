@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 interface SessionData {
   user: {
@@ -25,40 +25,44 @@ export function useSessionVerification() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const verifySession = useCallback(async (token: string): Promise<SessionData | null> => {
-    if (!token) {
-      setError('Token não fornecido');
-      return null;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
-      });
-
-      const data: SessionResponse = await response.json();
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Erro ao verificar sessão');
+  const verifySession = useCallback(
+    async (token: string): Promise<SessionData | null> => {
+      if (!token) {
+        setError("Token não fornecido");
         return null;
       }
 
-      return data.session;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro de conexão';
-      setError(errorMessage);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token }),
+        });
+
+        const data: SessionResponse = await response.json();
+
+        if (!response.ok || !data.success) {
+          setError(data.error || "Erro ao verificar sessão");
+          return null;
+        }
+
+        return data.session;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Erro de conexão";
+        setError(errorMessage);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   return {
     verifySession,

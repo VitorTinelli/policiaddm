@@ -1,8 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { clearOtherUsersCaches, clearDuplicateProfileCaches } from './cacheUtils';
-import { useAuth } from './AuthContext';
+import { useEffect } from "react";
+import {
+  clearOtherUsersCaches,
+  clearDuplicateProfileCaches,
+} from "./cacheUtils";
+import { useAuth } from "./AuthContext";
 
 /**
  * Componente para inicializar a limpeza de caches de segurança
@@ -11,19 +14,21 @@ import { useAuth } from './AuthContext';
 export function CacheSecurityInitializer() {
   const { user } = useAuth();
 
-  useEffect(() => {    // Executar limpeza ao carregar a aplicação
+  useEffect(() => {
+    // Executar limpeza ao carregar a aplicação
     const initializeCacheSecurity = () => {
       try {
         // Primeiro, limpar caches duplicados
         clearDuplicateProfileCaches();
-        
+
         // Depois, limpar caches de outros usuários
-        const userNick = user?.user_metadata?.nick || user?.user_metadata?.nickname;
+        const userNick =
+          user?.user_metadata?.nick || user?.user_metadata?.nickname;
         clearOtherUsersCaches(userNick, user?.email);
-        
-        console.log('[Security] Limpeza de cache de segurança executada');
+
+        console.log("[Security] Limpeza de cache de segurança executada");
       } catch (error) {
-        console.error('[Security] Erro na limpeza de cache:', error);
+        console.error("[Security] Erro na limpeza de cache:", error);
       }
     };
 

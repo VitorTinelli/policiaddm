@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect, Suspense } from 'react';
-import { useForm } from 'react-hook-form';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '../commons/AuthContext';
-import Link from 'next/link';
+import { useState, useEffect, Suspense } from "react";
+import { useForm } from "react-hook-form";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "../commons/AuthContext";
+import Link from "next/link";
 
 type LoginFormInputs = {
   username: string;
@@ -12,31 +12,34 @@ type LoginFormInputs = {
 };
 
 function LoginForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInputs>();
-  const [loginError, setLoginError] = useState('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormInputs>();
+  const [loginError, setLoginError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, signIn } = useAuth();
 
   useEffect(() => {
-    const message = searchParams.get('message');
+    const message = searchParams.get("message");
     if (message) {
       setSuccessMessage(message);
     }
   }, [searchParams]);
 
-  // Redirecionar se já estiver logado
   useEffect(() => {
     if (user) {
-      router.push('/');
+      router.push("/");
     }
   }, [user, router]);
 
   const onSubmit = async (data: LoginFormInputs) => {
-    setLoginError('');
-    setSuccessMessage('');
+    setLoginError("");
+    setSuccessMessage("");
     setLoading(true);
 
     try {
@@ -45,11 +48,11 @@ function LoginForm() {
       if (result.error) {
         setLoginError(result.error);
       } else {
-        router.push('/');
+        router.push("/");
       }
     } catch (error) {
-      console.error('Erro no login:', error);
-      setLoginError('Erro de conexão. Tente novamente.');
+      console.error("Erro no login:", error);
+      setLoginError("Erro de conexão. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -76,30 +79,44 @@ function LoginForm() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-base lg:text-base md:text-sm sm:text-sm font-medium text-gray-700 dark:text-white mb-1">
+            <label
+              htmlFor="username"
+              className="block text-base lg:text-base md:text-sm sm:text-sm font-medium text-gray-700 dark:text-white mb-1"
+            >
               Nickname:
             </label>
             <input
               id="username"
-              {...register('username', { required: 'Nickname é obrigatório' })}
+              {...register("username", { required: "Nickname é obrigatório" })}
               className="w-full h-10 lg:h-10 md:h-11 sm:h-12 text-base lg:text-base md:text-sm sm:text-sm border border-gray-300 dark:border-gray-500 p-2 rounded-md outline-none transition-shadow bg-white dark:bg-gray-700 text-black dark:text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
               placeholder="Digite seu nickname"
             />
-            {errors.username && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.username.message}</p>}
+            {errors.username && (
+              <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                {errors.username.message}
+              </p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-base lg:text-base md:text-sm sm:text-sm font-medium text-gray-700 dark:text-white mb-1">
+            <label
+              htmlFor="password"
+              className="block text-base lg:text-base md:text-sm sm:text-sm font-medium text-gray-700 dark:text-white mb-1"
+            >
               Senha:
             </label>
             <input
               id="password"
               type="password"
-              {...register('password', { required: 'Senha é obrigatória' })}
+              {...register("password", { required: "Senha é obrigatória" })}
               className="w-full h-10 lg:h-10 md:h-11 sm:h-12 text-base lg:text-base md:text-sm sm:text-sm border border-gray-300 dark:border-gray-500 p-2 rounded-md outline-none transition-shadow bg-white dark:bg-gray-700 text-black dark:text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
               placeholder="Digite sua senha"
             />
-            {errors.password && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
           {loginError && (
@@ -109,23 +126,26 @@ function LoginForm() {
           )}
 
           <div className="flex flex-col sm:flex-row gap-2 lg:gap-2 md:gap-3 sm:gap-3">
-            <Link 
+            <Link
               href="/register"
-              className="flex-1 w-full h-10 lg:h-10 md:h-11 sm:h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-md transition-colors duration-200 flex items-center justify-center text-center text-base lg:text-base md:text-sm sm:text-sm">
+              className="flex-1 w-full h-10 lg:h-10 md:h-11 sm:h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-md transition-colors duration-200 flex items-center justify-center text-center text-base lg:text-base md:text-sm sm:text-sm"
+            >
               Registrar
             </Link>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 w-full h-10 lg:h-10 md:h-11 sm:h-12 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:dark:bg-gray-600 text-black disabled:dark:text-gray-400 font-bold rounded-md transition-colors duration-200 disabled:cursor-not-allowed text-base lg:text-base md:text-sm sm:text-sm">
-              {loading ? 'Entrando...' : 'Entrar'}
+              className="flex-1 w-full h-10 lg:h-10 md:h-11 sm:h-12 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:dark:bg-gray-600 text-black disabled:dark:text-gray-400 font-bold rounded-md transition-colors duration-200 disabled:cursor-not-allowed text-base lg:text-base md:text-sm sm:text-sm"
+            >
+              {loading ? "Entrando..." : "Entrar"}
             </button>
           </div>
-        </form>        
+        </form>
         <div className="text-center mt-4 lg:mt-4 md:mt-6 sm:mt-6">
-          <Link 
-            href="/forgotPassword" 
-            className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 hover:underline transition-all text-sm lg:text-sm md:text-sm sm:text-sm">
+          <Link
+            href="/forgotPassword"
+            className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 hover:underline transition-all text-sm lg:text-sm md:text-sm sm:text-sm"
+          >
             Esqueci minha senha
           </Link>
         </div>
@@ -136,7 +156,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Carregando...
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

@@ -1,47 +1,46 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../commons/AuthContext';
-import { confirmCode } from './ConfirmCode';
-import Link from 'next/link';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../commons/AuthContext";
+import { confirmCode } from "./ConfirmCode";
+import Link from "next/link";
 
-type StepType = 'nick' | 'credentials';
+type StepType = "nick" | "credentials";
 
 export default function RegisterPage() {
-  const [step, setStep] = useState<StepType>('nick');
-  const [nick, setNick] = useState('');
-  const [code, setCode] = useState('');
-  const [error, setError] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [step, setStep] = useState<StepType>("nick");
+  const [nick, setNick] = useState("");
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
 
-  // Redirecionar se já estiver logado
   useEffect(() => {
     if (user) {
-      router.push('/');
+      router.push("/");
     }
   }, [user, router]);
 
   const handleNickSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nick.trim()) {
-      setError('Nickname é obrigatório');
+      setError("Nickname é obrigatório");
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/register/check-nick', {
-        method: 'POST',
+      const response = await fetch("/api/register/check-nick", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ nick }),
       });
@@ -49,9 +48,9 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.error === 'already_registered') {
-          alert('Você já está registrado. Retornando para tela de login.');
-          router.push('/login');
+        if (data.error === "already_registered") {
+          alert("Você já está registrado. Retornando para tela de login.");
+          router.push("/login");
           return;
         }
         setError(data.error);
@@ -60,7 +59,7 @@ export default function RegisterPage() {
 
       setCode(data.code);
     } catch {
-      setError('Erro ao verificar nickname');
+      setError("Erro ao verificar nickname");
     } finally {
       setLoading(false);
     }
@@ -68,19 +67,19 @@ export default function RegisterPage() {
 
   const handleConfirm = async () => {
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const result = await confirmCode(nick, code);
 
       if (!result.success) {
-        setError(result.error || 'Erro ao confirmar código');
+        setError(result.error || "Erro ao confirmar código");
         return;
       }
 
-      setStep('credentials');
+      setStep("credentials");
     } catch {
-      setError('Erro ao confirmar código');
+      setError("Erro ao confirmar código");
     } finally {
       setLoading(false);
     }
@@ -88,25 +87,25 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     if (!email.trim() || !password) {
-      setError('Email e senha são obrigatórios');
+      setError("Email e senha são obrigatórios");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Senhas não coincidem');
+      setError("Senhas não coincidem");
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch('/api/register', {
-        method: 'POST',
+      const response = await fetch("/api/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ nick, email, password }),
       });
@@ -118,29 +117,31 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push('/');
+      router.push("/");
     } catch {
-      setError('Erro ao registrar usuário');
+      setError("Erro ao registrar usuário");
     } finally {
       setLoading(false);
     }
   };
 
-  // Não renderizar se já estiver logado
   if (user) {
     return null;
   }
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-neutral-900">
       <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md p-8 w-full max-w-md">
-        {step === 'nick' && (
+        {step === "nick" && (
           <form onSubmit={handleNickSubmit}>
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-yellow-400">
               Etapa 1: Verifique seu Habbo
             </h2>
-            
+
             <div className="mb-4">
-              <label htmlFor="nick" className="block text-base font-medium text-gray-700 dark:text-white mb-2">
+              <label
+                htmlFor="nick"
+                className="block text-base font-medium text-gray-700 dark:text-white mb-2"
+              >
                 Nickname Habbo:
               </label>
               <input
@@ -155,12 +156,12 @@ export default function RegisterPage() {
             </div>
 
             {!code ? (
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
                 className="w-full h-10 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 text-black font-bold rounded-md transition-colors duration-200 disabled:cursor-not-allowed mt-8"
               >
-                {loading ? 'Verificando...' : 'Gerar Código'}
+                {loading ? "Verificando..." : "Gerar Código"}
               </button>
             ) : (
               <div className="mt-6">
@@ -172,13 +173,13 @@ export default function RegisterPage() {
                     {code}
                   </strong>
                 </div>
-                <button 
-                  type="button" 
-                  onClick={handleConfirm} 
+                <button
+                  type="button"
+                  onClick={handleConfirm}
                   disabled={loading}
                   className="w-full h-10 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 text-black font-bold rounded-md transition-colors duration-200 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Confirmando...' : 'Confirmar'}
+                  {loading ? "Confirmando..." : "Confirmar"}
                 </button>
               </div>
             )}
@@ -190,7 +191,7 @@ export default function RegisterPage() {
             )}
 
             <div className="mt-6">
-              <Link 
+              <Link
                 href="/login"
                 className="w-full h-10 bg-gray-300 hover:bg-gray-400 text-black font-bold rounded-md transition-colors duration-200 flex items-center justify-center"
               >
@@ -200,14 +201,17 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {step === 'credentials' && (
+        {step === "credentials" && (
           <form onSubmit={handleRegister}>
             <h2 className="text-2xl font-bold mb-6 text-center text-black dark:text-yellow-400">
               Etapa 2: Crie suas credenciais
             </h2>
-            
+
             <div className="mb-4">
-              <label htmlFor="email" className="block text-base font-medium text-gray-700 dark:text-white mb-2">
+              <label
+                htmlFor="email"
+                className="block text-base font-medium text-gray-700 dark:text-white mb-2"
+              >
                 Email:
               </label>
               <input
@@ -222,7 +226,10 @@ export default function RegisterPage() {
             </div>
 
             <div className="mb-4">
-              <label htmlFor="password" className="block text-base font-medium text-gray-700 dark:text-white mb-2">
+              <label
+                htmlFor="password"
+                className="block text-base font-medium text-gray-700 dark:text-white mb-2"
+              >
                 Senha:
               </label>
               <input
@@ -237,7 +244,10 @@ export default function RegisterPage() {
             </div>
 
             <div className="mb-4">
-              <label htmlFor="confirmPassword" className="block text-base font-medium text-gray-700 dark:text-white mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-base font-medium text-gray-700 dark:text-white mb-2"
+              >
                 Confirmar Senha:
               </label>
               <input
@@ -256,7 +266,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full h-10 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 text-black font-bold rounded-md transition-colors duration-200 disabled:cursor-not-allowed mt-8"
             >
-              {loading ? 'Registrando...' : 'Registrar'}
+              {loading ? "Registrando..." : "Registrar"}
             </button>
 
             {error && (
@@ -266,7 +276,7 @@ export default function RegisterPage() {
             )}
 
             <div className="mt-6">
-              <Link 
+              <Link
                 href="/login"
                 className="w-full h-10 bg-gray-300 hover:bg-gray-400 text-black font-bold rounded-md transition-colors duration-200 flex items-center justify-center"
               >

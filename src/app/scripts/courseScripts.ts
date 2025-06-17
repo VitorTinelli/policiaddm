@@ -6,7 +6,7 @@ export interface CourseScript {
 }
 
 export const courseScripts: CourseScript = {
-  'CFI': [
+  CFI: [
     "Saudações, Recruta(s)!",
     "Sejam muito bem-vindos à Polícia Militar: Departamento de Desenvolvimento Militar, a DDM!",
     "Eu sou o seu Graduador e estarei conduzindo esta aula.",
@@ -52,12 +52,12 @@ export const courseScripts: CourseScript = {
     "COMANDOS MILITARES",
     "Os comandos devem ser seguidos com precisão. Veja os principais:",
     "1. Sentido: um passo à frente, permaneça imóvel.",
-    "2. Apresentar-armas: acene (\"o/\") a cada 2 segundos até novo comando.",
+    '2. Apresentar-armas: acene ("o/") a cada 2 segundos até novo comando.',
     "3. Continência: acene uma vez.",
-    "4. Marcar passos: dance Hip Hop até receber o comando \"Sentido\".",
-    "5. Silêncio: não fale até receber o comando \"À vontade\".",
+    '4. Marcar passos: dance Hip Hop até receber o comando "Sentido".',
+    '5. Silêncio: não fale até receber o comando "À vontade".',
     "6. Apresente-se: vá até o superior, acene, espere ele acenar e diga:",
-    "\"Senhor + Patente + Nick, apresentando-se, senhor.\"",
+    '"Senhor + Patente + Nick, apresentando-se, senhor."',
     "7. Dispensado: acene e volte à posição inicial.",
     "8. À vontade: você está liberado para retomar suas atividades.",
     "Alguma dúvida?",
@@ -96,10 +96,10 @@ export const courseScripts: CourseScript = {
     "Atualize sua missão para: [DDM] Soldado [TAG do Graduador]",
     "Vista sua boina preta e a camisa na cor marrom.",
     "Seja bem-vindo à DDM. Juntos, somos mais fortes!",
-    "FIM DA INSTRUÇÃO INICIAL"
+    "FIM DA INSTRUÇÃO INICIAL",
   ],
-  
-  'CFC': [
+
+  CFC: [
     "Olá, Soldado! Bem-vindo ao Curso de Formação Complementar (CFC).",
     "Eu sou o(a) Graduador(a) SeuNick e conduzirei sua formação.",
     "Este curso reforça os fundamentos da Polícia Militar:",
@@ -150,8 +150,8 @@ export const courseScripts: CourseScript = {
     "---",
     "SE APROVADO:",
     "Parabéns, Soldado! Você concluiu o Curso de Formação Complementar (CFC).",
-    "Adicione [CFC] ao fim da sua missão:"
-  ]
+    "Adicione [CFC] ao fim da sua missão:",
+  ],
 };
 
 /**
