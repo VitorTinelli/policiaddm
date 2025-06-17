@@ -54,11 +54,19 @@ export function useCompanyPermissions(): CompanyPermissions {
       key.startsWith("profile_"),
     );
 
+    console.log("[DEBUG] useCompanyPermissions - Iniciando busca de permissões");
+    console.log("[DEBUG] user.email:", user.email);
+    console.log("[DEBUG] cacheKeys encontradas:", cacheKeys);
+
     for (const key of cacheKeys) {
       try {
         const cachedData = localStorage.getItem(key);
         if (cachedData) {
           const profileData: CachedProfileData = JSON.parse(cachedData);
+
+          console.log("[DEBUG] Verificando cache:", key);
+          console.log("[DEBUG] profileData.militar:", profileData.militar);
+          console.log("[DEBUG] profileData.companhias:", profileData.companhias);
 
           const isMatch =
             profileData.militar?.email === user.email ||
@@ -67,6 +75,7 @@ export function useCompanyPermissions(): CompanyPermissions {
               profileData.militar?.nick === user.email);
 
           if (isMatch) {
+            console.log("[DEBUG] Match encontrado!");
             userProfile = profileData;
             break;
           }
@@ -77,6 +86,8 @@ export function useCompanyPermissions(): CompanyPermissions {
     }
     if (userProfile && userProfile.companhias) {
       const companhias = userProfile.companhias || [];
+
+      console.log("[DEBUG] Companhias encontradas:", companhias);
 
       const isEFB = companhias.some(
         (comp: CompanhiaInfo) =>
@@ -99,6 +110,12 @@ export function useCompanyPermissions(): CompanyPermissions {
 
       const hasFullAccess = isSUP || isCOR;
 
+      console.log("[DEBUG] Permissões calculadas:");
+      console.log("[DEBUG] isEFB:", isEFB);
+      console.log("[DEBUG] isSUP:", isSUP);
+      console.log("[DEBUG] isCOR:", isCOR);
+      console.log("[DEBUG] hasFullAccess:", hasFullAccess);
+
       setPermissions({
         isEFB,
         isSUP,
@@ -107,6 +124,7 @@ export function useCompanyPermissions(): CompanyPermissions {
         userCompanies: companhias,
       });
     } else {
+      console.log("[DEBUG] Nenhum perfil encontrado ou sem companhias");
       setPermissions({
         isEFB: false,
         isSUP: false,

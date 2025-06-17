@@ -41,6 +41,7 @@ export default function Homepage() {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const userEmail = useMemo(() => user?.email, [user?.email]);
   const fetchProfile = useCallback(async () => {
     if (!userEmail) {
@@ -329,7 +330,7 @@ export default function Homepage() {
               )}
 
               {/* Mensagem para usuários sem acesso à EFB */}
-              {!permissions.isEFB && !permissions.hasFullAccess && (
+              {!authLoading && !loading && !permissions.isEFB && !permissions.hasFullAccess && permissions.userCompanies.length >= 0 && (
                 <div className="bg-gray-50 dark:bg-neutral-700 rounded-lg p-6 sm:p-4 md:p-3 lg:p-6 border border-gray-200 dark:border-gray-600">
                   <h3 className="text-xl sm:text-lg md:text-base lg:text-xl font-bold mb-6 sm:mb-4 md:mb-3 lg:mb-6 text-gray-900 dark:text-white flex items-center gap-2 border-b-2 border-gray-200 dark:border-gray-600 pb-2">
                     🔒 Escola de Formação Básica

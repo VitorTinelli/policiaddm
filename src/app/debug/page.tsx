@@ -5,8 +5,22 @@ import { useCompanyPermissions } from "../commons/useCompanyPermissions";
 import Header from "../header/Header";
 import Footer from "../footer/Footer";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function CompanyDebugPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_AMBIENTE !== "preview") {
+      router.push("/"); 
+      return;
+    }
+  }, [router]);
+
+  if (process.env.NEXT_PUBLIC_AMBIENTE !== "preview") {
+    return null;
+  }
+
   const { user } = useAuth();
   const permissions = useCompanyPermissions();
   const [profileCacheKeys, setProfileCacheKeys] = useState<string[]>([]);
