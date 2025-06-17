@@ -9,21 +9,19 @@ import { useRouter } from "next/navigation";
 
 export default function CompanyDebugPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const permissions = useCompanyPermissions();
+  const [profileCacheKeys, setProfileCacheKeys] = useState<string[]>([]);
 
+  // Verificar ambiente e redirecionar se necessário
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_AMBIENTE !== "preview") {
-      router.push("/"); 
+      router.push("/");
       return;
     }
   }, [router]);
 
-  if (process.env.NEXT_PUBLIC_AMBIENTE !== "preview") {
-    return null;
-  }
-
-  const { user } = useAuth();
-  const permissions = useCompanyPermissions();
-  const [profileCacheKeys, setProfileCacheKeys] = useState<string[]>([]);
+  // Carregar chaves do cache
   useEffect(() => {
     if (typeof window !== "undefined") {
       const keys = Object.keys(localStorage).filter((key) =>
@@ -32,6 +30,11 @@ export default function CompanyDebugPage() {
       setProfileCacheKeys(keys);
     }
   }, []);
+
+  // Se não for preview, não renderizar nada enquanto redireciona
+  if (process.env.NEXT_PUBLIC_AMBIENTE !== "preview") {
+    return null;
+  }
 
   const handleTestAPI = async () => {
     if (!user?.email) {
