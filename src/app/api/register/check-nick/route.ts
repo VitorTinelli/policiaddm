@@ -30,24 +30,18 @@ export async function POST(request: NextRequest) {
 
     const { data: user, error: fetchError } = await supabase
       .from("militares")
-      .select("status")
+      .select("ativo, acesso_system")
       .eq("nick", nick)
       .single();
 
     if (fetchError) {
-      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+      console.error("Erro ao buscar usuário:", fetchError);
+      return NextResponse.json({ error: "Militar não cadastrado, procure um superior." }, { status: 500 });
     }
 
-    if (user?.status === "ativo") {
+    if (user?.acesso_system === true) {
       return NextResponse.json(
         { error: "already_registered" },
-        { status: 400 },
-      );
-    }
-
-    if (!user || user.status === "inativo") {
-      return NextResponse.json(
-        { error: "Conta Inativa ou não encontrada" },
         { status: 400 },
       );
     }

@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       console.error("Erro na criação do usuário:", authError);
       return NextResponse.json({ error: authError.message }, { status: 400 });
     }
-
+    
     // Atualizar militar: adicionar email e liberar acesso ao sistema
     const { error: updateError } = await supabase
       .from("militares")
