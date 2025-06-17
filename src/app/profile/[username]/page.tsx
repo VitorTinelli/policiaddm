@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo, useCallback, memo, Suspense } from 'react';
 import { useParams } from 'next/navigation';
 import { HabboProfilePicture } from '../../commons/HabboProfilePicture';
+import { useAuth } from '../../commons/AuthContext';
+import { clearOtherUsersCaches, isOwnProfile as checkIsOwnProfile } from '../../commons/cacheUtils';
 import Header from '../../header/Header';
 import Footer from '../../footer/Footer';
 
@@ -36,17 +38,33 @@ interface HistoricoItem {
   novaPatente?: string;
 }
 
+interface CompanhiaInfo {
+  id: string;
+  companhiaId: number;
+  nome: string;
+  sigla: string;
+}
+
 interface ProfileData {
   militar: MilitarData;
   historico: HistoricoItem[];
+  companhias?: CompanhiaInfo[]; // Opcional, só para o próprio perfil
 }
 
 const ProfilesContent = memo(function ProfilesContent() {
   const params = useParams();
   const username = params?.username as string;
+  const { user } = useAuth(); // Obter usuário logado
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Verificar se o usuário está visualizando seu próprio perfil
+  const isOwnProfile = useMemo(() => {
+    if (!user || !username) return false;
+    
+    const userNick = user.user_metadata?.nick || user.user_metadata?.nickname;
+    return checkIsOwnProfile(username, userNick, user.email);
+  }, [user, username]);
 
   // Cache utilities
   const getCachedData = useCallback((key: string) => {
@@ -61,46 +79,75 @@ const ProfilesContent = memo(function ProfilesContent() {
     }
     return null;
   }, []);
-
   const setCachedData = useCallback((key: string, data: ProfileData) => {
-    localStorage.setItem(key, JSON.stringify(data));
-    localStorage.setItem(`${key}_timestamp`, Date.now().toString());
-  }, []);
+    // Apenas armazenar no cache se for o próprio perfil do usuário
+    if (isOwnProfile) {
+      localStorage.setItem(key, JSON.stringify(data));
+      localStorage.setItem(`${key}_timestamp`, Date.now().toString());
+    }
+  }, [isOwnProfile]);
+  // Limpar caches antigos de outros usuários ao montar o componente
+  useEffect(() => {
+    const userNick = user?.user_metadata?.nick || user?.user_metadata?.nickname;
+    clearOtherUsersCaches(userNick, user?.email);
+  }, [user]);
 
   const fetchProfile = useCallback(async () => {
     if (!username) {
       setError('Username não fornecido');
       setLoading(false);
       return;
-    }
-
-    const cacheKey = `profile_${username}`;
+    }    const cacheKey = `profile_${username}`;
     
-    // Tentar buscar do cache primeiro
-    const cachedData = getCachedData(cacheKey);
-    if (cachedData) {
-      setProfileData(cachedData);
-      setLoading(false);
-      return;
-    }
-
-    try {
+    // Apenas tentar buscar do cache se for o próprio perfil do usuário
+    if (isOwnProfile) {
+      const cachedData = getCachedData(cacheKey);
+      if (cachedData) {
+        console.log(`[Profile] Usando cache para próprio perfil: ${username}`);
+        setProfileData(cachedData);
+        setLoading(false);
+        return;
+      }
+    } else {
+      console.log(`[Profile] Perfil de outro usuário (${username}), não usando cache`);
+    }    try {
       setLoading(true);
       setError('');
 
-      const response = await fetch(`/api/profiles?nick=${encodeURIComponent(username)}`);
+      // Debug do usuário logado
+      console.log(`[Profile] Debug usuário:`, {
+        user: user,
+        email: user?.email,
+        nick: user?.user_metadata?.nick || user?.user_metadata?.nickname,
+        isOwnProfile: isOwnProfile
+      });
+
+      // Construir URL da API com parâmetro do usuário solicitante
+      let apiUrl = `/api/profiles?nick=${encodeURIComponent(username)}`;
+      if (user?.email) {
+        apiUrl += `&requestingUserEmail=${encodeURIComponent(user.email)}`;
+        console.log(`[Profile] Enviando requestingUserEmail: ${user.email}`);
+      } else {
+        console.log(`[Profile] Usuário não logado ou sem email, não enviando requestingUserEmail`);
+      }
+
+      const response = await fetch(apiUrl);
 
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.error || 'Erro ao carregar perfil');
         return;
-      }
-
-      const data = await response.json();
+      }      const data = await response.json();
       const profileData = data.data;
       
-      // Salvar no cache (10 minutos)
-      setCachedData(cacheKey, profileData);
+      console.log(`[Profile] Perfil carregado da API para: ${username}${isOwnProfile ? ' (próprio perfil)' : ' (outro usuário)'}`);
+      
+      // Salvar no cache apenas se for o próprio perfil
+      if (isOwnProfile) {
+        setCachedData(cacheKey, profileData);
+        console.log(`[Profile] Dados salvos no cache para próprio perfil: ${username}`);
+      }
+      
       setProfileData(profileData);
     } catch (err) {
       console.error('Erro ao buscar perfil:', err);
@@ -108,19 +155,21 @@ const ProfilesContent = memo(function ProfilesContent() {
     } finally {
       setLoading(false);
     }
-  }, [username, getCachedData, setCachedData]);
+  }, [username, getCachedData, setCachedData, isOwnProfile, user]);
 
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
-
   const handleRefresh = useCallback(() => {
     const cacheKey = `profile_${username}`;
-    // Limpar cache antes de recarregar
-    localStorage.removeItem(cacheKey);
-    localStorage.removeItem(`${cacheKey}_timestamp`);
+    // Limpar cache apenas se for o próprio perfil
+    if (isOwnProfile) {
+      localStorage.removeItem(cacheKey);
+      localStorage.removeItem(`${cacheKey}_timestamp`);
+      console.log(`[Profile] Cache limpo para próprio perfil: ${username}`);
+    }
     fetchProfile();
-  }, [fetchProfile, username]);
+  }, [fetchProfile, username, isOwnProfile]);
 
   const sortedHistory = useMemo(() => {
     if (!profileData?.historico) return [];

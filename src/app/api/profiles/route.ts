@@ -56,6 +56,13 @@ interface TagItem {
   created_at: string;
 }
 
+interface CompanhiaInfo {
+  id: string;
+  companhiaId: number;
+  nome: string;
+  sigla: string;
+}
+
 interface HistoricoItem {
   id: string;
   tipo: 'curso' | 'promocao' | 'punicao' | 'tag';
@@ -65,7 +72,8 @@ interface HistoricoItem {
   aplicadorTag?: string;
   data: Date;
   dataFormatada: string;
-  status?: string;  icone: string;
+  status?: string;
+  icone: string;
   motivo?: string;
   patenteAtual?: string;
   novaPatente?: string;
@@ -158,6 +166,7 @@ export async function GET(request: NextRequest) {
   const email = searchParams.get('email');
   const checkCompany = searchParams.get('checkCompany'); // Novo parâmetro para verificar companhia
   const companyId = searchParams.get('companyId'); // ID da companhia para verificar
+  const requestingUserEmail = searchParams.get('requestingUserEmail'); // Email do usuário que está fazendo a solicitação
 
   // Se for apenas para verificar companhia
   if (checkCompany === 'true') {
@@ -436,21 +445,93 @@ export async function GET(request: NextRequest) {
           icone: icone
         });
       });
+    }    // Ordena o histórico por data decrescente
+    historico.sort((a, b) => b.data.getTime() - a.data.getTime());    
+    const missao = `[DDM] ${militar.patente_nome || 'Soldado'} [${militar['tag-promotor'] || militar.tag || 'DDM'}]`;    // Verificar se é o próprio usuário ou não para filtrar dados sensíveis
+    // Para casos onde o email do auth pode ser diferente do email cadastrado,
+    // vamos buscar se existe um militar com o requestingUserEmail
+    let isOwnProfile = false;
+    
+    if (requestingUserEmail) {
+      // Verificação básica
+      isOwnProfile = militar.email === requestingUserEmail || 
+                    militar.nick === requestingUserEmail;
+      
+      // Se não deu match e requestingUserEmail parece ser um email,
+      // vamos verificar se existe um militar com esse email que seja o mesmo usuário
+      if (!isOwnProfile && requestingUserEmail.includes('@')) {
+        try {
+          const { data: militarByEmail } = await supabase
+            .from('militares')
+            .select('id, nick')
+            .eq('email', requestingUserEmail)
+            .single();
+          
+          if (militarByEmail && militarByEmail.id === militar.id) {
+            isOwnProfile = true;
+            console.log(`[API] Match encontrado por email alternativo: ${requestingUserEmail} -> ${militar.nick}`);
+          }
+        } catch (err) {
+          // Ignore errors, não é crítico
+        }
+      }
     }
 
-    // Ordena o histórico por data decrescente
-    historico.sort((a, b) => b.data.getTime() - a.data.getTime());    
-    const missao = `[DDM] ${militar.patente_nome || 'Soldado'} [${militar['tag-promotor'] || militar.tag || 'DDM'}]`;
+    console.log(`[API] Verificação de próprio perfil: requestingUserEmail=${requestingUserEmail}, militar.email=${militar.email}, militar.nick=${militar.nick}, isOwnProfile=${isOwnProfile}`);// Buscar informações de companhia se for o próprio perfil
+    let companhias: CompanhiaInfo[] = [];
+    if (isOwnProfile) {
+      try {
+        const { data: companhiasData, error: companhiasError } = await supabase
+          .from('militares-companhia')
+          .select(`
+            id,
+            companhiafk,
+            companhias!inner(
+              id,
+              nome,
+              sigla
+            )
+          `)
+          .eq('militarfk', militar.id);        if (!companhiasError && companhiasData) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          companhias = companhiasData.map((rel: any) => ({
+            id: rel.id,
+            companhiaId: rel.companhiafk,
+            nome: rel.companhias?.nome || 'Nome não encontrado',
+            sigla: rel.companhias?.sigla || 'Sigla não encontrada'
+          }));
+          console.log(`[API] Companhias carregadas para próprio perfil ${militar.nick}: ${companhias.length}`);
+        } else {
+          console.error('[API] Erro ao buscar companhias:', companhiasError);
+        }
+      } catch (error) {
+        console.error('[API] Erro ao buscar informações de companhia:', error);
+      }
+    }
+
+    // Filtrar dados sensíveis se não for o próprio perfil
+    const filteredMilitar = isOwnProfile ? militar : {
+      ...militar,
+      email: undefined, 
+    };    console.log(`[API] Perfil ${isOwnProfile ? 'próprio' : 'de outro usuário'} solicitado: ${militar.nick}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const responseData: any = {
+      militar: {
+        ...filteredMilitar,
+        missaoFormatada: missao
+      },
+      historico
+    };
+
+    // Adicionar companhias se for o próprio perfil
+    if (isOwnProfile && companhias.length > 0) {
+      responseData.companhias = companhias;
+    }
 
     return NextResponse.json({
       success: true,
-      data: {
-        militar: {
-          ...militar,
-          missaoFormatada: missao
-        },
-        historico
-      }
+      data: responseData
     });
 
   } catch (error) {

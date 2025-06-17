@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useAuth } from '../../commons/AuthContext';
+import { useCompanyPermissions } from '../../commons/useCompanyPermissions';
 import Header from '../../header/Header';
 import Footer from '../../footer/Footer';
 
@@ -28,6 +29,7 @@ interface CompanyCoursesData {
 function CompanyCoursePages() {
     const params = useParams();
     const companyParam = params.companhia as string;
+    const permissions = useCompanyPermissions();
     
     const [companyData, setCompanyData] = useState<CompanyCoursesData | null>(null);
     const [selectedCourseId, setSelectedCourseId] = useState('');
@@ -40,6 +42,22 @@ function CompanyCoursePages() {
 
     const { user } = useAuth();
     const email = user?.email;
+
+    // Verificar se o usuário tem acesso a esta companhia
+    const hasAccessToCompany = (company: string) => {
+        const companyLower = company?.toLowerCase();
+        
+        // Acesso total para SUP e COR
+        if (permissions.hasFullAccess) return true;
+        
+        // Acesso específico para EFB
+        if (companyLower === 'efb' && permissions.isEFB) return true;
+        
+        // Adicionar outras companhias conforme necessário
+        // if (companyLower === 'outras' && permissions.isOutras) return true;
+        
+        return false;
+    };
 
     // Carregar dados da companhia e cursos
     useEffect(() => {
@@ -121,8 +139,56 @@ function CompanyCoursePages() {
             setError('Erro ao inserir dados do curso. Tente novamente.');
         } finally {
             setIsLoading(false);
-        }
-    }    if (isLoadingData) {
+        }    }
+
+    // Verificar acesso antes de renderizar
+    if (!hasAccessToCompany(companyParam)) {
+        return (
+            <>
+                <Header />
+                <main className="min-h-[calc(100dvh-16dvh)] flex items-center justify-center bg-gray-50 dark:bg-neutral-900 p-4 lg:p-6">
+                    <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-md w-full max-w-2xl">
+                        <div className="text-center">
+                            <div className="text-6xl mb-4">🚫</div>
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                                Acesso Negado
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-300 mb-4">
+                                Você não tem permissão para acessar os cursos de <strong>{companyParam?.toUpperCase()}</strong>.
+                            </p>
+                            {permissions.userCompanies.length > 0 ? (
+                                <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg mb-4">
+                                    <p className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-2">
+                                        Suas companhias atuais:
+                                    </p>
+                                    <div className="flex flex-wrap gap-2 justify-center">
+                                        {permissions.userCompanies.map(company => (
+                                            <span key={company.id} className="text-xs bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                                                {company.sigla} - {company.nome}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Entre em contato com sua administração para obter acesso.
+                                </p>
+                            )}
+                            <button 
+                                onClick={() => window.history.back()} 
+                                className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-6 py-2 rounded-lg transition-colors"
+                            >
+                                Voltar
+                            </button>
+                        </div>
+                    </div>
+                </main>
+                <Footer />
+            </>
+        );
+    }
+
+    if (isLoadingData) {
         return (
             <>
                 <Header />

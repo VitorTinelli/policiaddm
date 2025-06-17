@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useRequireAuth } from '../../commons/useRequireAuth';
-import { useCompanyAccess } from '../../commons/useCompanyAccess';
+import { useCompanyPermissions } from '../../commons/useCompanyPermissions';
 import Header from '../../header/Header';
 import Footer from '../../footer/Footer';
 import { getCourseScript as getScript } from '../courseScripts';
@@ -32,6 +32,7 @@ export default function CompanyScriptsPage() {
   const companhia = params.companhia as string;
   
   const { user, loading: authLoading } = useRequireAuth();
+  const permissions = useCompanyPermissions();
   const [companyData, setCompanyData] = useState<Company | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -43,12 +44,18 @@ export default function CompanyScriptsPage() {
   const availableCompanies = {
     'EFB': 'Escola de Formação Básica',
   };
-
-  const companyCodes = {
-    'EFB': 1,
-  };
-  const companyCode = companyCodes[companhia?.toUpperCase() as keyof typeof companyCodes];
-  const { hasAccess, loading: checkingAccess } = useCompanyAccess(user?.email, companyCode);
+  // Verificar se o usuário tem acesso a esta companhia
+  const hasAccessToCompany = useCallback((company: string) => {
+    const companyLower = company?.toLowerCase();
+    
+    // Acesso total para SUP e COR
+    if (permissions.hasFullAccess) return true;
+    
+    // Acesso específico para EFB
+    if (companyLower === 'efb' && permissions.isEFB) return true;
+    
+    return false;
+  }, [permissions]);
   const patentesMap = useMemo((): Record<number, string> => ({
     1: 'Soldado',
     2: 'Cabo',
@@ -127,22 +134,22 @@ export default function CompanyScriptsPage() {
           button.classList.remove('bg-green-500', 'hover:bg-green-600');
           button.classList.add('bg-gray-500', 'hover:bg-gray-600');
         }, 1000);
-      }
-    } catch (err) {
+      }    } catch (err) {
       console.error('Erro ao copiar frase:', err);
       alert('Erro ao copiar frase. Tente selecionar e copiar manualmente.');
-    }  };  useEffect(() => {
-    if (companhia && hasAccess) {
+    }
+  };  useEffect(() => {
+    if (companhia && hasAccessToCompany(companhia)) {
       fetchCourses();
     }
-  }, [companhia, hasAccess, fetchCourses]);if (authLoading || checkingAccess) {
+  }, [companhia, hasAccessToCompany, fetchCourses]);
+
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
-          <div className="text-lg">
-            {authLoading ? 'Carregando...' : 'Verificando acesso...'}
-          </div>
+          <div className="text-lg">Carregando...</div>
         </div>
       </div>
     );
@@ -168,7 +175,7 @@ export default function CompanyScriptsPage() {
   }
 
   // Verificar se o usuário tem acesso à companhia
-  if (!hasAccess) {
+  if (!hasAccessToCompany(companhia)) {
     return (
       <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-neutral-900">
         <Header />
@@ -365,6 +372,5 @@ export default function CompanyScriptsPage() {
       </main>
       
       <Footer />
-    </div>
-  );
+    </div>  );
 }
