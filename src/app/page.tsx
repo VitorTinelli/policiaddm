@@ -225,8 +225,7 @@ export default function Homepage() {
                         Solicite uma TAG personalizada
                       </div>
                     </div>
-                  </Link>
-                  <Link
+                  </Link>                  <Link
                     href="/promotion"
                     className="group flex items-center gap-4 sm:gap-3 md:gap-3 lg:gap-4 p-4 sm:p-3 md:p-3 lg:p-4 bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-yellow-400 hover:-translate-y-1 transition-all duration-200 shadow-sm hover:shadow-md"
                   >
@@ -242,6 +241,26 @@ export default function Homepage() {
                       </div>
                     </div>
                   </Link>
+
+                  {/* Link para Venda de Cargos - apenas para supremacia */}
+                  {permissions.isSUP && (
+                    <Link
+                      href="/sell"
+                      className="group flex items-center gap-4 sm:gap-3 md:gap-3 lg:gap-4 p-4 sm:p-3 md:p-3 lg:p-4 bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-yellow-400 hover:-translate-y-1 transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
+                      <div className="w-12 h-12 sm:w-10 sm:h-10 md:w-8 md:h-8 lg:w-12 lg:h-12 bg-yellow-400 hover:bg-yellow-500 rounded-lg flex items-center justify-center text-2xl sm:text-xl md:text-lg lg:text-2xl flex-shrink-0 text-black">
+                        💰
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-gray-900 dark:text-white text-lg sm:text-base md:text-sm lg:text-lg mb-1">
+                          Venda de Cargos
+                        </div>
+                        <div className="text-gray-600 dark:text-gray-300 text-sm sm:text-xs md:text-xs lg:text-sm">
+                          Vender patentes militares
+                        </div>
+                      </div>
+                    </Link>
+                  )}
                 </div>
               </div>
 

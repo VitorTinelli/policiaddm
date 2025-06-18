@@ -1,5 +1,5 @@
 import { useAuth } from "./AuthContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 interface CompanhiaInfo {
   id: string;
@@ -73,8 +73,7 @@ export function useCompanyPermissions(): CompanyPermissions {
       isInitialized: true,
     };
   };
-
-  const checkCache = () => {
+  const checkCache = useCallback(() => {
     const cacheKeys = Object.keys(localStorage).filter((key) =>
       key.startsWith("profile_"),
     );
@@ -102,9 +101,9 @@ export function useCompanyPermissions(): CompanyPermissions {
         console.error(`[Permissions] Erro ao processar cache ${key}:`, error);
       }
     }
-    return false;
-  };
-  const fetchFromAPI = async () => {
+    return false;  }, [user?.email]);
+  
+  const fetchFromAPI = useCallback(async () => {
     // Verificar se ainda temos um usuário válido antes de fazer a chamada
     if (!user?.email) {
       console.log("[DEBUG] Usuário não encontrado, cancelando busca da API");
@@ -149,7 +148,7 @@ export function useCompanyPermissions(): CompanyPermissions {
         isInitialized: true,
       });
     }
-  };
+  }, [user?.email]);
   useEffect(() => {
     if (!user?.email) {
       setPermissions({
@@ -195,15 +194,13 @@ export function useCompanyPermissions(): CompanyPermissions {
 
       // Se ainda não encontrou, buscar da API
       await fetchFromAPI();
-    };
-
-    loadPermissions();
+    };    loadPermissions();
 
     // Cleanup function para cancelar operações pendentes
     return () => {
       isCancelled = true;
     };
-  }, [user?.email]);
+  }, [user?.email, checkCache, fetchFromAPI]);
 
   return permissions;
 }
