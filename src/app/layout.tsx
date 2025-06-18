@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./commons/AuthContext";
 import { CacheSecurityInitializer } from "./commons/CacheSecurityInitializer";
+import { AppInitializer } from '@/components/AppInitializer';
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +37,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           <CacheSecurityInitializer />
-          {children}
+          <AppInitializer>
+            {children}
+          </AppInitializer>
         </AuthProvider>
       </body>
     </html>

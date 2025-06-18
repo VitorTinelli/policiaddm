@@ -71,29 +71,8 @@ export default function Homepage() {
       setLoading(true);
       setError("");
 
-      let userResponse;
-      let searchMethod = "email";
-      let finalUrl = "";
-
-      if (userEmail.includes("@")) {
-        finalUrl = `/api/profiles?email=${encodeURIComponent(userEmail)}&requestingUserEmail=${encodeURIComponent(userEmail)}`;
-        userResponse = await fetch(finalUrl);
-      } else {
-        searchMethod = "nick";
-        finalUrl = `/api/profiles?nick=${encodeURIComponent(userEmail)}&requestingUserEmail=${encodeURIComponent(userEmail)}`;
-        userResponse = await fetch(finalUrl);
-      }
-
-      if (!userResponse.ok && searchMethod === "email") {
-        finalUrl = `/api/profiles?nick=${encodeURIComponent(userEmail)}&requestingUserEmail=${encodeURIComponent(userEmail)}`;
-        userResponse = await fetch(finalUrl);
-      }
-
-      if (!userResponse.ok && searchMethod === "nick") {
-        finalUrl = `/api/profiles?email=${encodeURIComponent(userEmail)}&requestingUserEmail=${encodeURIComponent(userEmail)}`;
-        userResponse = await fetch(finalUrl);
-      }
-
+      const userResponse = await fetch(`/api/profiles?email=${encodeURIComponent(userEmail)}&requestingUserEmail=${encodeURIComponent(userEmail)}`);
+      
       if (!userResponse.ok) {
         setError("Perfil não encontrado. Contate o administrador.");
         setLoading(false);
