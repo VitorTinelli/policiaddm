@@ -1,8 +1,8 @@
 "use client";
 
 import { ReactNode } from 'react';
-import { useCompanyPermissions } from '../app/commons/useCompanyPermissions';
-import { useAuth } from '../app/commons/AuthContext';
+import { useCompanyPermissions } from './useCompanyPermissions';
+import { useAuth } from './AuthContext';
 
 interface AppInitializerProps {
   children: ReactNode;

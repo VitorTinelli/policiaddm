@@ -202,7 +202,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      // Limpar estados primeiro
+      setUser(null);
+      setSession(null);
+      
+      // Limpar localStorage
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("session");
+      
+      // Limpar cache de perfis
+      const profileKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith("profile_")
+      );
+      profileKeys.forEach(key => {
+        localStorage.removeItem(key);
+        localStorage.removeItem(`${key}_timestamp`);
+      });
+      
+      // Fazer logout no Supabase
+      await supabase.auth.signOut();
+      
+      console.log("[AUTH] Logout realizado com sucesso");
+    } catch (error) {
+      console.error("[AUTH] Erro durante logout:", error);
+      // Mesmo com erro, limpar estados locais
+      setUser(null);
+      setSession(null);
+    }
   };
 
   return (

@@ -36,7 +36,7 @@ interface ProfileData {
 }
 
 export default function Homepage() {
-  const { user, loading: authLoading } = useRequireAuth();
+  const { user } = useRequireAuth();
   const permissions = useCompanyPermissions();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,28 +99,14 @@ export default function Homepage() {
       fetchProfile();
     }
   }, [fetchProfile, user, userEmail]);
-
   const getRecentHistory = useMemo(() => {
     if (!profileData?.historico) return [];
     return profileData.historico.slice(0, 3);
   }, [profileData?.historico]);
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-neutral-900">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mb-4"></div>
-          <div className="text-gray-900 dark:text-white text-xl">
-            Verificando autenticação...
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (!user) {
     return null;
   }
-
   return (
     <>
       <Header />
@@ -309,7 +295,7 @@ export default function Homepage() {
               )}
 
               {/* Mensagem para usuários sem acesso à EFB */}
-              {!authLoading && !loading && !permissions.isEFB && !permissions.hasFullAccess && permissions.userCompanies.length >= 0 && (
+              {!loading && !permissions.isEFB && !permissions.hasFullAccess && permissions.userCompanies.length >= 0 && (
                 <div className="bg-gray-50 dark:bg-neutral-700 rounded-lg p-6 sm:p-4 md:p-3 lg:p-6 border border-gray-200 dark:border-gray-600">
                   <h3 className="text-xl sm:text-lg md:text-base lg:text-xl font-bold mb-6 sm:mb-4 md:mb-3 lg:mb-6 text-gray-900 dark:text-white flex items-center gap-2 border-b-2 border-gray-200 dark:border-gray-600 pb-2">
                     🔒 Escola de Formação Básica
@@ -342,10 +328,8 @@ export default function Homepage() {
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-            </div>
-          </section>
+                </div>              )}
+            </div>          </section>
         </div>
       </div>
       <Footer />

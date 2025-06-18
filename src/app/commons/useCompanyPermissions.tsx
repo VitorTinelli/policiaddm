@@ -36,6 +36,120 @@ export function useCompanyPermissions(): CompanyPermissions {
     isInitialized: false,
   });
 
+  const calculatePermissions = (companhias: CompanhiaInfo[]) => {
+    const isEFB = companhias.some(
+      (comp: CompanhiaInfo) =>
+        comp.sigla?.toUpperCase() === "EFB" ||
+        comp.nome?.toLowerCase().includes("escola") ||
+        comp.nome?.toLowerCase().includes("formação"),
+    );
+
+    const isSUP = companhias.some(
+      (comp: CompanhiaInfo) =>
+        comp.sigla?.toUpperCase() === "SUP" ||
+        comp.nome?.toLowerCase().includes("supremacia"),
+    );
+
+    const isCOR = companhias.some(
+      (comp: CompanhiaInfo) =>
+        comp.sigla?.toUpperCase() === "COR" ||
+        comp.nome?.toLowerCase().includes("corregedoria"),
+    );
+
+    const hasFullAccess = isSUP || isCOR;
+
+    console.log("[DEBUG] Permissões calculadas:");
+    console.log("[DEBUG] isEFB:", isEFB);
+    console.log("[DEBUG] isSUP:", isSUP);
+    console.log("[DEBUG] isCOR:", isCOR);
+    console.log("[DEBUG] hasFullAccess:", hasFullAccess);
+
+    return {
+      isEFB,
+      isSUP,
+      isCOR,
+      hasFullAccess,
+      userCompanies: companhias,
+      isInitialized: true,
+    };
+  };
+
+  const checkCache = () => {
+    const cacheKeys = Object.keys(localStorage).filter((key) =>
+      key.startsWith("profile_"),
+    );
+
+    console.log("[DEBUG] Verificando cache, keys:", cacheKeys);
+
+    for (const key of cacheKeys) {
+      try {
+        const cachedData = localStorage.getItem(key);
+        if (cachedData) {
+          const profileData: CachedProfileData = JSON.parse(cachedData);          const isMatch =
+            profileData.militar?.email === user?.email ||
+            (user?.email && key.includes(user.email)) ||
+            (user?.email && !user.email.includes("@") &&
+              profileData.militar?.nick === user.email);
+
+          if (isMatch && profileData.companhias) {
+            console.log("[DEBUG] Match encontrado no cache!");
+            const newPermissions = calculatePermissions(profileData.companhias);
+            setPermissions(newPermissions);
+            return true;
+          }
+        }
+      } catch (error) {
+        console.error(`[Permissions] Erro ao processar cache ${key}:`, error);
+      }
+    }
+    return false;
+  };
+  const fetchFromAPI = async () => {
+    // Verificar se ainda temos um usuário válido antes de fazer a chamada
+    if (!user?.email) {
+      console.log("[DEBUG] Usuário não encontrado, cancelando busca da API");
+      setPermissions({
+        isEFB: false,
+        isSUP: false,
+        isCOR: false,
+        hasFullAccess: false,
+        userCompanies: [],
+        isInitialized: true,
+      });
+      return;
+    }
+
+    console.log("[DEBUG] Buscando dados da API...");
+    try {      const response = await fetch(
+        `/api/profiles?email=${encodeURIComponent(user.email)}&requestingUserEmail=${encodeURIComponent(user.email)}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Erro ao buscar dados do usuário");
+      }
+
+      const data = await response.json();
+      const companhias = data.data?.companhias || [];
+
+      console.log("[DEBUG] Dados da API recebidos:", companhias);
+
+      const newPermissions = calculatePermissions(companhias);
+      setPermissions(newPermissions);      // Armazenar no cache
+      const cacheKey = `profile_${user.email}`;
+      localStorage.setItem(cacheKey, JSON.stringify(data.data));
+      localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
+    } catch (error) {
+      console.error("[DEBUG] Erro ao buscar dados da API:", error);
+      setPermissions({
+        isEFB: false,
+        isSUP: false,
+        isCOR: false,
+        hasFullAccess: false,
+        userCompanies: [],
+        isInitialized: true,
+      });
+    }
+  };
   useEffect(() => {
     if (!user?.email) {
       setPermissions({
@@ -53,161 +167,42 @@ export function useCompanyPermissions(): CompanyPermissions {
       return;
     }
 
-    let userProfile: CachedProfileData | null = null;
-    const cacheKeys = Object.keys(localStorage).filter((key) =>
-      key.startsWith("profile_"),
-    );
+    let isCancelled = false;
 
-    console.log("[DEBUG] useCompanyPermissions - Iniciando busca de permissões");
-    console.log("[DEBUG] user.email:", user.email);
-    console.log("[DEBUG] cacheKeys encontradas:", cacheKeys);
-
-    for (const key of cacheKeys) {
-      try {
-        const cachedData = localStorage.getItem(key);
-        if (cachedData) {
-          const profileData: CachedProfileData = JSON.parse(cachedData);
-
-          console.log("[DEBUG] Verificando cache:", key);
-          console.log("[DEBUG] profileData.militar:", profileData.militar);
-          console.log("[DEBUG] profileData.companhias:", profileData.companhias);
-
-          const isMatch =
-            profileData.militar?.email === user.email ||
-            key.includes(user.email) ||
-            (!user.email.includes("@") &&
-              profileData.militar?.nick === user.email);
-
-          if (isMatch) {
-            console.log("[DEBUG] Match encontrado!");
-            userProfile = profileData;
-            break;
-          }
-        }
-      } catch (error) {
-        console.error(`[Permissions] Erro ao processar cache ${key}:`, error);
-      }
-    }
-
-    if (userProfile && userProfile.companhias) {
-      const companhias = userProfile.companhias || [];
-
-      console.log("[DEBUG] Companhias encontradas:", companhias);
-
-      const isEFB = companhias.some(
-        (comp: CompanhiaInfo) =>
-          comp.sigla?.toUpperCase() === "EFB" ||
-          comp.nome?.toLowerCase().includes("escola") ||
-          comp.nome?.toLowerCase().includes("formação"),
-      );
-
-      const isSUP = companhias.some(
-        (comp: CompanhiaInfo) =>
-          comp.sigla?.toUpperCase() === "SUP" ||
-          comp.nome?.toLowerCase().includes("supremacia"),
-      );
-
-      const isCOR = companhias.some(
-        (comp: CompanhiaInfo) =>
-          comp.sigla?.toUpperCase() === "COR" ||
-          comp.nome?.toLowerCase().includes("corregedoria"),
-      );
-
-      const hasFullAccess = isSUP || isCOR;
-
-      console.log("[DEBUG] Permissões calculadas:");
-      console.log("[DEBUG] isEFB:", isEFB);
-      console.log("[DEBUG] isSUP:", isSUP);
-      console.log("[DEBUG] isCOR:", isCOR);
-      console.log("[DEBUG] hasFullAccess:", hasFullAccess);
-
-      setPermissions({
-        isEFB,
-        isSUP,
-        isCOR,
-        hasFullAccess,
-        userCompanies: companhias,
-        isInitialized: true,
-      });
-    } else {
-      console.log("[DEBUG] Nenhum perfil encontrado ou sem companhias");
+    const loadPermissions = async () => {
+      if (isCancelled) return;
       
-      // Aguardar um pouco para o cache ser populado (útil no primeiro login)
-      setTimeout(() => {
-        const updatedCacheKeys = Object.keys(localStorage).filter((key) =>
-          key.startsWith("profile_"),
-        );
-        
-        let foundProfile = false;
-        for (const key of updatedCacheKeys) {
-          try {
-            const cachedData = localStorage.getItem(key);
-            if (cachedData) {
-              const profileData: CachedProfileData = JSON.parse(cachedData);
+      console.log("[DEBUG] Iniciando carregamento de permissões para:", user?.email);
+      
+      // Primeiro, tentar cache imediatamente
+      if (checkCache()) {
+        return;
+      }
 
-              const isMatch =
-                profileData.militar?.email === user.email
+      if (isCancelled) return;
 
-              if (isMatch && profileData.companhias) {
-                const companhias = profileData.companhias || [];
-                
-                const isEFB = companhias.some(
-                  (comp: CompanhiaInfo) =>
-                    comp.sigla?.toUpperCase() === "EFB" ||
-                    comp.nome?.toLowerCase().includes("escola") ||
-                    comp.nome?.toLowerCase().includes("formação"),
-                );
+      // Aguardar um pouco e tentar novamente
+      console.log("[DEBUG] Cache não encontrado, aguardando...");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (isCancelled) return;
+      
+      if (checkCache()) {
+        return;
+      }
 
-                const isSUP = companhias.some(
-                  (comp: CompanhiaInfo) =>
-                    comp.sigla?.toUpperCase() === "SUP" ||
-                    comp.nome?.toLowerCase().includes("supremacia"),
-                );
+      if (isCancelled) return;
 
-                const isCOR = companhias.some(
-                  (comp: CompanhiaInfo) =>
-                    comp.sigla?.toUpperCase() === "COR" ||
-                    comp.nome?.toLowerCase().includes("corregedoria"),
-                );
+      // Se ainda não encontrou, buscar da API
+      await fetchFromAPI();
+    };
 
-                const hasFullAccess = isSUP || isCOR;
+    loadPermissions();
 
-                console.log("[DEBUG] Permissões encontradas após retry:");
-                console.log("[DEBUG] isEFB:", isEFB);
-                console.log("[DEBUG] isSUP:", isSUP);
-                console.log("[DEBUG] isCOR:", isCOR);
-
-                setPermissions({
-                  isEFB,
-                  isSUP,
-                  isCOR,
-                  hasFullAccess,
-                  userCompanies: companhias,
-                  isInitialized: true,
-                });
-                foundProfile = true;
-                break;
-              }
-            }
-          } catch (error) {
-            console.error(`[Permissions] Erro ao processar cache no retry ${key}:`, error);
-          }
-        }
-        
-        // Se ainda não encontrou, marcar como inicializado sem permissões
-        if (!foundProfile) {
-          console.log("[DEBUG] Nenhum perfil encontrado após retry - finalizando sem permissões");
-          setPermissions({
-            isEFB: false,
-            isSUP: false,
-            isCOR: false,
-            hasFullAccess: false,
-            userCompanies: [],
-            isInitialized: true,
-          });
-        }
-      }, 500); // Aguardar 500ms para o cache ser populado
-    }
+    // Cleanup function para cancelar operações pendentes
+    return () => {
+      isCancelled = true;
+    };
   }, [user?.email]);
 
   return permissions;
