@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, memo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../commons/AuthContext";
 import Header from "../header/Header";
@@ -28,7 +28,7 @@ function useDebounce(value: string, delay: number) {
   return debouncedValue;
 }
 
-const PromotionPage = memo(() => {
+export default function PromotionPage() {
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,10 +56,11 @@ const PromotionPage = memo(() => {
       setIsSubmitting(true);
 
       try {
-        const response = await fetch("/api/promotion", {
+        const response = await fetch("/api/rank-requirements", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            action: "promotion",
             afetado: data.afetado,
             motivo: data.motivo,
             permissao: data.permissao || null,
@@ -251,8 +252,4 @@ const PromotionPage = memo(() => {
       <Footer />
     </>
   );
-});
-
-PromotionPage.displayName = "PromotionPage";
-
-export default PromotionPage;
+}
