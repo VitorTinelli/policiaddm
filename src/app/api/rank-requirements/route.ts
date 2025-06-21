@@ -121,8 +121,6 @@ async function handlePromotion(body: RankRequirementRequest) {
       motivo: motivo,
       permissao: permissao || null,
       status: "aguardando",
-      "patente-atual-nome": patenteAtualNome,
-      "nova-patente-nome": novaPatenteNome
     });
 
   if (promocaoError) {
